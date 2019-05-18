@@ -1,0 +1,55 @@
+{% extends "base_site.html" %}
+{% load staticfiles %}
+
+{% block content %}
+    <h1>Talking Scores Beta</h1>
+
+    <div class="col-md-8 col-md-offset-2 text-left">
+
+        <h3>Oops!</h3>
+
+        <div class="alert alert-warning" role="alert">
+            <span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>
+            <span class="sr-only">Warning:</span>
+            I'm sorry to say that we had trouble processing this score. The development team has been
+            notified and will look into how to fix this.
+        </div>
+
+        <p>If you'd like to be notified when this score is working, simply put your email address in the box below. We
+            promise to only use your email address to notify you about this score.</p>
+
+        {#        {{ form }}#}
+
+        {% if form.is_bound %}
+            {% if form.is_valid %}
+                <div class="alert alert-success">
+                    <strong>Thank you!</strong>
+                    We have made a note of your email address and will let you know when we've investigated why this score
+                    isn't working.
+                </div>
+            {% else %}
+                <div class="alert alert-danger">
+                    {% if form.errors.notify_email.0 == 'This field is required.' %}
+                        <strong>Missing email address</strong>
+                    {% else %}
+                        <strong>Invalid email address</strong>
+                    {% endif %}
+                    <br/>Please do enter a valid email address if you'd like to be notified about this score. Honestly,
+                    we don't do anything nefarious with it.
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <form action="{% url 'error' id filename %}" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="notify_email">Email address</label>
+                <input type="email" class="form-control" name="notify_email" id="id_notify_email"
+                       placeholder="Email address">
+            </div>
+            <button type="submit" class="btn btn-default">Notify me</button>
+        </form>
+
+    </div>
+
+{% endblock content %}

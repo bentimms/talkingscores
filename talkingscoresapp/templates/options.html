@@ -1,0 +1,83 @@
+{% extends "base_site.html" %}
+{% load staticfiles %}
+
+{% block content %}
+    <h1>Options</h1>
+
+    <p class="lead">Select which parts and how many bars at a time you would like.</p>
+
+    <div class="row text-left">
+        <div class="col-md-6 col-md-offset-3">
+            <h3>Detected features:</h3>
+            <ul class="list-unstyled">
+                <li>{{ title }} by {{ composer }}</li>
+                <li>{{ instruments|length }} instrument{{ instruments|length|pluralize }}:
+                    {% for instrument in instruments %}
+    {% if forloop.first %}{% else %}
+        {% if forloop.last %} and {% else %}, {% endif %}
+    {% endif %}{{instrument}}
+{% endfor %} </li>
+                <li>Time signature of {{ time_signature }}</li>
+                <li>Key signature of {{ key_signature }}</li>
+                <li>Tempo: {{ tempo }}</li>
+                <li>{{ number_of_bars }} bars</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row text-left">
+        <div class="col-md-6 col-md-offset-3">
+            <h3>Options:</h3>
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger" role="alert">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+
+        {% if form.errors %}
+        <div class="alert alert-danger" role="alert">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            {{ form.errors }}
+        </div>
+        {% endif %}
+
+            <form class="form-horizontal" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <p>Selected instruments:</p>
+
+                    {% for instrument in instruments %}
+                    <div class="checkbox">
+                        <label for="instrument_{{ forloop.counter }}">
+                            <input type="checkbox" id="instrument_{{ forloop.counter }}" value="checked" checked="checked"
+                                   aria-label="{{ instrument }}">
+                            {{ instrument }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <label for="bars_at_a_time">Bars at a time</label>
+                    <select name="bars_at_a_time" id="bars_at_a_time" class="form-control">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>4</option>
+                        <option>8</option>
+                    </select>
+
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-offset-3 col-sm-6">
+                        <button type="submit" class="btn btn-primary btn-lg">Generate Talking Score</button>
+                    </div>
+                </div>
+
+
+            </form>
+        </div>
+    </div>
+
+{% endblock content %}

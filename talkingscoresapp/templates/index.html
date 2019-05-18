@@ -1,0 +1,53 @@
+{% extends "base_site.html" %}
+{% load staticfiles %}
+
+{% block content %}
+    <h1>Talking Scores Beta</h1>
+
+    <p class="lead">Upload or provide a URL to a MusicXML file.</p>
+
+    <form class="form-horizontal" action="{% url 'index' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            {% for error in form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                    {{ error }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        <div class="form-group">
+            <label for="id_filename" class="col-sm-3 control-label">Upload</label>
+
+            <div class="col-sm-6">
+                <input type="file" class="form-control input-lg" id="id_filename" name="filename">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-offset-3 col-sm-6">or</div>
+        </div>
+        <div class="form-group">
+            <label for="id_url" class="col-sm-3 control-label">URL</label>
+
+            <div class="col-sm-6">
+                <input type="url" class="form-control input-lg" id="id_url" name="url"
+                       placeholder="http://beta.talkingscores.org/scores/macdowell-to-a-wild-rose.xml">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-offset-3 col-sm-6">
+                <button type="submit" class="btn btn-primary btn-lg">Generate Talking Score</button>
+            </div>
+        </div>
+    </form>
+
+    <br/>
+    <h3>Example scores</h3>
+
+    <ul class="list-unstyled">
+        {% for example_score in example_scores %}
+            <li><a href="{% static 'data/' %}{{ example_score }}">{{ example_score }}</a></li>
+        {% endfor %}
+    </ul>
+    </div>
+{% endblock content %}
