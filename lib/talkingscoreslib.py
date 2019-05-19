@@ -132,7 +132,7 @@ class Music21TalkingScore(TalkingScoreBase):
             return self.score.metadata.composer
         # Look for a text box in the top right of the first page
         for tb in self.score.getElementsByClass('TextBox'):
-            if tb.justify == 'right':
+            if tb.style.justify == 'right':
                 return tb.content
         return "Unknown"
 
@@ -144,13 +144,7 @@ class Music21TalkingScore(TalkingScoreBase):
         # return "4 4"
 
     def get_initial_key_signature(self):
-        k = self.score.parts[0].getKeySignatures()
-        pprint.pprint(k)
-        k = k[0]
-        if k.mode == 'none':
-            return k.mode
-        else:
-            return k.getScale().name
+        return self.score.parts[0].keySignature
 
     def get_initial_tempo(self):
         # Get the first measure of the first part
