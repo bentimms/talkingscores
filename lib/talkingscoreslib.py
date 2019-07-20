@@ -80,7 +80,7 @@ class TSChord(TSEvent):
         rendered_elements = ['%s-note chord' % len(self.pitches)]
         rendered_elements.append(' '.join(super(TSChord, self).render(context) ))
         previous_pitch = None
-        for pitch in self.pitches:
+        for pitch in sorted(self.pitches, key=lambda TSPitch: TSPitch.pitch_number):
             rendered_elements.append(' '.join(pitch.render(previous_pitch) ))
             previous_pitch = pitch
         return [', '.join(rendered_elements)]
