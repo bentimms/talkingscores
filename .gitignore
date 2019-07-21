@@ -1,0 +1,8 @@
+.talkingscore-env/
+test_scores/
+media/
+staticfiles/
+__pycache__
+tmp/
+.vscode/
+db.sqlite3
