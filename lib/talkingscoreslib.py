@@ -110,7 +110,11 @@ class Music21TalkingScore(TalkingScoreBase):
         'half': 'minim',
         'quarter': 'crotchet',
         'eighth': 'quaver',
+        '16th': 'semi-quaver',
+        '32nd': 'demi-semi-quaver',
+        '64th': 'hemi-demi-semi-quaver',
     }
+
 
     def __init__(self, musicxml_filepath):
         self.filepath = os.path.realpath(musicxml_filepath)
