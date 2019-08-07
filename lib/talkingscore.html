@@ -23,8 +23,7 @@
 
 <p>{{ basic_information['title']|default('Untitled work') }} by {{ basic_information['composer']|default('Unknown composer') }}.</p>
 
-<p>Time signature of {{ preamble['time_signature'] }}, key signature of {{ preamble['key_signature'] }}, {{ preamble['tempo']|default('no tempo specified') }}</p>
-
+<p>Time signature of {{ preamble['time_signature'] }}, key signature of {{ preamble['key_signature'] }}, tempo of {{ preamble['tempo']|default('no tempo specified') }}</p>
 <p>Music, both hands, a bar at a time, beat by beat</p>
 
 <a href="#" onClick="MIDIjs.play('{{ full_score }}'); return false;">Listen to whole score</a><br/>
