@@ -144,7 +144,15 @@ class Music21TalkingScore(TalkingScoreBase):
         # return "4 4"
 
     def get_initial_key_signature(self):
-        return self.score.parts[0].keySignature
+        m1 = self.score.parts[0].measures(1,1)
+        ks = m1.flat.getElementsByClass('KeySignature')[0]
+        strKeySig = "No sharps or flats"
+        if (ks.sharps>0):
+            strKeySig = str(ks.sharps) + " sharps"
+        elif (ks.sharps<0):
+            strKeySig = str(abs(ks.sharps)) + " flats"
+
+        return strKeySig
 
     def get_initial_tempo(self):
         # Get the first measure of the first part
