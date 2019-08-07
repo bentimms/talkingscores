@@ -124,7 +124,7 @@ class TSScore(object):
             mxmlScore = Music21TalkingScore(data_path)
             tsf = HTMLTalkingScoreFormatter(mxmlScore)
             html = tsf.generateHTML(output_path=os.path.dirname(html_path),web_path=web_path)
-            with open(html_path, "wb") as fh:
+            with open(html_path, "w") as fh:
                 fh.write(html)
         else:
             self.logger.info("Score already processed, fetching existing HTML")
