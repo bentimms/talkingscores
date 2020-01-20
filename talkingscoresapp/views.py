@@ -98,7 +98,7 @@ def options(request, id, filename):
         form = TalkingScoreGenerationOptionsForm(request.POST)
         if form.is_valid():
             # Write out the options
-            options = {"bars_at_a_time": 4}
+            options = {"bars_at_a_time": int(form.cleaned_data["bars_at_a_time"])}
             with open(options_path, "w") as options_fh:
                 json.dump(options, options_fh)
             return redirect('process', id, filename)

@@ -4,6 +4,7 @@ from jinja2.loaders import FileSystemLoader
 __author__ = 'BTimms'
 
 import os
+import json
 import math
 import pprint
 from music21 import *
@@ -335,11 +336,14 @@ class HTMLTalkingScoreFormatter():
 
         self.score = talking_score
 
+        options_path = self.score.filepath + '.opts'
+        with open(options_path, "r") as options_fh:
+                options = json.load(options_fh)
         self.settings = {
             'pitchBeforeDuration': False,
             'describeBy': 'beat',
             'handsTogether': True,
-            'barsAtATime': 4
+            'barsAtATime': int(options["bars_at_a_time"])
         }
 
     def generateHTML(self,output_path="",web_path=""):
