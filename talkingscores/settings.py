@@ -39,13 +39,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'talkingscoresapp',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -54,6 +55,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'talkingscores.urls'
+
+
 
 TEMPLATES = [
     {
@@ -125,5 +128,8 @@ STATIC_URL = '/static/'
 
 # Media root
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-STATIC_ROOT = 'staticfiles'
+#STATIC_ROOT = 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+CORS_ORIGIN_ALLOW_ALL = False
+#CORS_ORIGIN_WHITELIST = ('null')
