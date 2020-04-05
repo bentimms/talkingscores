@@ -18,7 +18,6 @@ def hashfile(afile, hasher, blocksize=65536):
     while len(buf) > 0:
         hasher.update(buf)
         buf = afile.read(blocksize)
-    print("hash = %s",hasher.hexdigest())
     return hasher.hexdigest()
 
 class TSScoreState(object):
@@ -33,7 +32,6 @@ class TSScore(object):
     # I can't seem to find a way of getting the class object in scope at this point to dynamically populate the name
     logger = logging.getLogger("%s.%s" % (__name__, "TSScore"))
     
-
     def __init__(self, id=None, initial_state=TSScoreState.IDLE, url=None, filename=None):
         self._state = initial_state
         self.url   = url
@@ -91,7 +89,7 @@ class TSScore(object):
         return self.id
 
     def get_data_file_path(self, root=MEDIA_ROOT, createDirs=True):
-        data_file_path = os.path.join(*(root, self.id, self.filename))
+        data_file_path = os.path.join(*(root, self.id, self.filename)) # removed slashes in directory structure to make files easier to brwose to
         if createDirs:
             dir_to_create = os.path.dirname(data_file_path)
             try:
@@ -148,9 +146,8 @@ class TSScore(object):
             mxml_score = Music21TalkingScore(temporary_file.name)
         except Exception as ex:
             #logger.exception("Unparsable file: %s" % temporary_file.name)
-            logger.exception("Unparsable file: %s" % ex)
+            logger.exception("Unparsable file: %s" % temporary_file.name + " --- " + str(ex))
             raise ex;
-            #return None
 
         score = TSScore(filename=os.path.basename(uploaded_file.name))
         score.store(temporary_file.name, score.filename)

@@ -354,7 +354,7 @@ class HTMLTalkingScoreFormatter():
         return template.render({'settings' : self.settings,
                                 'basic_information': self.get_basic_information(),
                                 'preamble': self.get_preamble(),
-                                'full_score': os.path.join(web_path, os.path.basename(self.score.generate_midi_for_part_range(output_path=output_path))),
+                                'full_score': "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(self.score.generate_midi_for_part_range(output_path=output_path)),
                                 'music_segments': self.get_music_segments(output_path,web_path)
                                 })
 
@@ -393,17 +393,22 @@ class HTMLTalkingScoreFormatter():
 
 
             midi_filenames = {
-                'both': os.path.join(web_path, os.path.basename( self.score.generate_midi_for_part_range(bar_index, end_bar_index,output_path=output_path) ) ),
+                #'both': os.path.join(web_path, os.path.basename( self.score.generate_midi_for_part_range(bar_index, end_bar_index,output_path=output_path) ) ),
                 # 'right': os.path.join(web_path, os.path.basename( self.score.generate_midi_for_part_range(bar_index, end_bar_index, ['P1-Staff1'],output_path=output_path) ) ),
             }
+
+            both_hands_midi = self.score.generate_midi_for_part_range(bar_index, end_bar_index,
+                                                                     output_path=output_path)
+            midi_filenames['both'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(both_hands_midi)
+                
             left_hand_midi = self.score.generate_midi_for_part_range(bar_index, end_bar_index, ['P1-Staff2'],
                                                                      output_path=output_path)
             right_hand_midi = self.score.generate_midi_for_part_range(bar_index, end_bar_index, ['P1-Staff1'],
                                                                      output_path=output_path)
             if left_hand_midi is not None:
-                midi_filenames['left'] = "/scores2/" + os.path.basename(web_path) + "/" + os.path.basename(left_hand_midi)
+                midi_filenames['left'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(left_hand_midi)
             if right_hand_midi is not None:
-                midi_filenames['right'] = "/scores2/" + os.path.basename(web_path) + "/" + os.path.basename(right_hand_midi)
+                midi_filenames['right'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(right_hand_midi)
 
             music_segment = {'start_bar':bar_index, 'end_bar': end_bar_index, 'events_by_bar_and_beat': events_by_bar_and_beat, 'midi_filenames': midi_filenames }
             music_segments.append(music_segment)

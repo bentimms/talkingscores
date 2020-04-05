@@ -2,19 +2,10 @@
 <html>
 <head>
     <title>Talking score for {{ basic_information['title'] }}</title>
-    <script type='text/javascript' src='//www.midijs.net/lib/midi.js'></script> 
-{#    <script type='text/javascript' src='/static/js/midi.js' %}"></script> #}
-{#   <script type='text/javascript' src='http://midijs.net/lib/midi.js'></script> #}
     <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
     <!-- midi.js package -->
-{#    <script src="../lib/MIDI.js/js/MIDI/AudioDetect.js" type="text/javascript"></script>#}
-{#    <script src="../lib/MIDI.js/js/MIDI/LoadPlugin.js" type="text/javascript"></script>#}
-{#    <script src="../lib/MIDI.js/js/MIDI/Plugin.js" type="text/javascript"></script>#}
-{#    <script src="../lib/MIDI.js/js/MIDI/Player.js" type="text/javascript"></script>#}
-{#    <script src="../lib/MIDI.js/js/Window/DOMLoader.XMLHttp.js" type="text/javascript"></script>#}
-{#    <!-- extras -->#}
-{#    <script src="../lib/MIDI.js/inc/Base64.js" type="text/javascript"></script>#}
-{#    <script src="../lib/MIDI.js/inc/base64binary.js" type="text/javascript"></script>#}
+    <script type='text/javascript' src='//www.midijs.net/lib/midi.js'></script> 
+{#   <!-- extras -->#}
     <style type="text/css">
         body{font-family: Georgia; font-size: 16pt}
     </style>
@@ -28,25 +19,16 @@
 <p>Time signature of {{ preamble['time_signature'] }}, key signature of {{ preamble['key_signature'] }}, tempo of {{ preamble['tempo']|default('no tempo specified') }}</p>
 <p>Music, both hands, a bar at a time, beat by beat</p>
 
-<a href="#" onClick="MIDIjs.play('{{ full_score }}'); return false;">Listen to whole score</a><br/>
+<a href="#" onClick="MIDIjs.play('{{ full_score }}'); return false;">Play entire score</a><br/>
 <a href="#" onClick="MIDIjs.stop(); return false;">Stop playback</a>
-
-<br/><br/><a href="#" onClick="MIDIjs.play('{{ full_score }}'); return false;">Listen to whole score</a><br/>
-
 
 {% for segment in music_segments %}
 
     <h2>Bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}</h2>
 
-{#    <a href="#" onClick="MIDIjs.play('{{ segment.midi_filenames['both'] }}'); return false;">Listen to bars  {{ segment.start_bar }} to {{ segment.end_bar }}, both hands</a>#}
-{#    <br/><a href="#" onClick="MIDIjs.play('{{ segment.midi_filenames['left'] }}'); return false;">Listen to bars  {{ segment.start_bar }} to {{ segment.end_bar }}, left hand</a>#}
-{#    <br/><a href="#" onClick="MIDIjs.play('{{ segment.midi_filenames['right'] }}'); return false;">Listen to bars  {{ segment.start_bar }} to {{ segment.end_bar }}, right hand</a>#}
-    <a href="#" onClick="setTimeout(function(){MIDIjs.play('{{ segment.midi_filenames['both'] }}'); },10); return false;">Play bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, both hands</a>
-    <br/><a href="#" onClick="setTimeout(function(){MIDIjs.play('{{ segment.midi_filenames['left'] }}'); },10); return false;">Play bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, left hand</a>
-    <br/><a href="#" onClick="setTimeout(function(){MIDIjs.play('{{ segment.midi_filenames['right'] }}'); }, 10); return false;">Play bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, right hand</a>
-{#    <a href="{{ segment.midi_filenames['both'] }}">Listen to bars  {{ segment.start_bar }} to {{ segment.end_bar }}, both hands</a>,#}
-{#    <a href="{{ segment.midi_filenames['left'] }}">Listen to bars {{ segment.start_bar }} to {{ segment.end_bar }}, left hand</a>,#}
-{#    <a href="{{ segment.midi_filenames['right'] }}">Listen to bars  {{ segment.start_bar }} to {{ segment.end_bar }}, right hand</a>#}
+    <a href="#" onClick="MIDIjs.play('{{ segment.midi_filenames['both'] }}'); return false;">Play bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, both hands</a>
+    <br/><a href="#" onClick="MIDIjs.play('{{ segment.midi_filenames['left'] }}'); return false;">Play bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, left hand</a>
+    <br/><a href="#" onClick="MIDIjs.play('{{ segment.midi_filenames['right'] }}'); return false;">Play bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, right hand</a>
 
     {#  Loop over each bar pulling out the beat-based dictionaries #}
     {% for bar, events_for_beats in segment.events_by_bar_and_beat|dictsort %}
@@ -93,7 +75,6 @@
 {#<script type="text/javascript">#}
 {##}
 {#    window.onload = function () {#}
-{#        console.log("hello") #}
 {#        MIDI.loadPlugin({#}
 {#            soundfontUrl: "../lib/MIDI.js/soundfont/",#}
 {#            instrument: "acoustic_grand_piano",#}
