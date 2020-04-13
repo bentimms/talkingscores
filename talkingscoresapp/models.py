@@ -11,7 +11,10 @@ from urllib.request import url2pathname
 import tempfile
 from talkingscoreslib import Music21TalkingScore, HTMLTalkingScoreFormatter
 
+log_format = "%(levelname)s %(asctime)s - %(message)s"
+logging.basicConfig(filename=os.path.join(*(MEDIA_ROOT, "log1.txt")), format=log_format)
 logger = logging.getLogger(__name__)
+logger.fatal("hello - I'm testing a logger!!!")
 
 def hashfile(afile, hasher, blocksize=65536):
     buf = afile.read(blocksize)
@@ -28,10 +31,10 @@ class TSScoreState(object):
     PROCESSED = "processed"
 
 class TSScore(object):
-
+    
     # I can't seem to find a way of getting the class object in scope at this point to dynamically populate the name
     logger = logging.getLogger("%s.%s" % (__name__, "TSScore"))
-    
+    logger.level = logging.DEBUG
     def __init__(self, id=None, initial_state=TSScoreState.IDLE, url=None, filename=None):
         self._state = initial_state
         self.url   = url
@@ -145,7 +148,6 @@ class TSScore(object):
         try:
             mxml_score = Music21TalkingScore(temporary_file.name)
         except Exception as ex:
-            #logger.exception("Unparsable file: %s" % temporary_file.name)
             logger.exception("Unparsable file: %s" % temporary_file.name + " --- " + str(ex))
             raise ex;
 
