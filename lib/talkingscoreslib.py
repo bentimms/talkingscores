@@ -34,7 +34,11 @@ class TSDynamic(TSEvent):
     long_name = None
 
     def __init__(self, long_name=None, short_name=None):
-        self.long_name = long_name
+        if (long_name!=None):
+            self.long_name = long_name.capitalize()
+        else:
+            self.long_name = short_name
+        
         self.short_name = short_name
 
     def render(self, context=None):
@@ -239,7 +243,6 @@ class Music21TalkingScore(TalkingScoreBase):
 
         for element in measure.elements:
             element_type = type(element).__name__
-
             event = None
             hand = ('Left', 'Right')[part_id == 'P1-Staff1']
 
@@ -258,7 +261,7 @@ class Music21TalkingScore(TalkingScoreBase):
                     event.tie = element.tie.type
 
             elif element_type == 'Dynamic':
-                event = TSDynamic(long_name = element.longName.capitalize(), short_name=element.value)
+                event = TSDynamic(long_name = element.longName, short_name=element.value)
                 pitch_index = 0 # Always speak the dynamic first
                 hand = 'Both'
 
@@ -321,7 +324,6 @@ class Music21TalkingScore(TalkingScoreBase):
     #TODO need to make more efficient when working with multiple parts ie more than just the left hand piano part
     #music21 might have a better way of doing this eg using context or something.  If part 0 is included then tempos are already present.
     def insert_tempos(self, stream, offset_start):
-        print('insert tempo - offset start = ' + str(offset_start))
         for mmb in self.score.metronomeMarkBoundaries()[self.last_tempo_inserted_index:]:
             if (mmb[0]>=offset_start+stream.duration.quarterLength): # ignore tempos that start after stream ends
                 return           
@@ -438,7 +440,7 @@ class HTMLTalkingScoreFormatter():
 
 
 if __name__ == '__main__':
-
+    
     # testScoreFilePath = '../talkingscoresapp/static/data/macdowell-to-a-wild-rose.xml'
     testScoreFilePath = '../media/172a28455fa5cfbdaa4eecd5f63a0a2ebaddd92d569980fb402811b9cd5cce4a/MozartPianoSonata.xml'
     # testScoreFilePath = '../talkingscores/talkingscoresapp/static/data/bach-2-part-invention-no-13.xml'

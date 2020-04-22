@@ -147,7 +147,6 @@ def index(request):
         form = MusicXMLSubmissionForm()
 
     example_scores = []
-    #for datafile in os.listdir(os.path.join(BASE_DIR, 'talkingscoresapp', 'static', 'data')):
     for datafile in os.listdir(os.path.join(BASE_DIR, 'talkingscoresapp', 'static', 'data')):
         if datafile.endswith('.html'):
             example_scores.append(os.path.basename(datafile))
