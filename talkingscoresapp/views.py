@@ -72,7 +72,7 @@ def midi(request, id, filename):
     fr['Access-Control-Allow-Origin'] = '*'
     return fr
 
-# View for the a particular score
+# View for a particular score
 def error(request, id, filename):
     template = loader.get_template('error.html')
 
@@ -89,6 +89,25 @@ def error(request, id, filename):
         form = NotifyEmailForm()
 
     context = {'id': id, 'filename': filename, 'form': form}
+    return HttpResponse(template.render(context, request))
+
+# View for change-log
+def change_log(request):
+    template = loader.get_template('change-log.html')
+    context = {}
+    return HttpResponse(template.render(context, request))
+
+
+# View for contact-us
+def contact_us(request):
+    template = loader.get_template('contact-us.html')
+    context = {}
+    return HttpResponse(template.render(context, request))
+
+# View for privacy-policy
+def privacy_policy(request):
+    template = loader.get_template('privacy-policy.html')
+    context = {}
     return HttpResponse(template.render(context, request))
 
 

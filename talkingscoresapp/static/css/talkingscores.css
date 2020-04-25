@@ -6,6 +6,11 @@ body {
   text-align: center;
 }
 
+.bold-heading {
+	font-size: 21px;
+	font-weight: bold;
+}
+
 .loading {
 	-webkit-animation:spin 2s linear infinite;
 	-moz-animation:spin 2s linear infinite;

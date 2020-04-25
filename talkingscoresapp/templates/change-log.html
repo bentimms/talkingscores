@@ -1,0 +1,56 @@
+{% extends "base_site.html" %}
+{% load staticfiles %}
+
+{% block title %}Change Log - Talking Scores (Beta){% endblock %}
+{% block meta-description %}Overview of updates to Talking Scores - an open source project to convert MusicXML files to a spoken representation.{% endblock %}
+
+{% block content %}
+    <h1>Talking Scores Beta</h1>
+
+    <div class="col-md-8 col-md-offset-2 text-left">
+
+        <h2>Change Log</h2>
+
+        <p class="lead">This page details various updates made to this project.  The dates represent the approximate date when particular changes were committed in Git.  The actual date that the changes became live on this site will most likely be different.  Progress is gradually being made - so please do retry files that may not have worked before.</p>
+
+        <p class="lead">For more information about specific changes - see the history on <a href="https://github.com/bentimms/talkingscores" target="_blank">Github</a>.</p>
+
+        <p class="lead"><b>Current State</b><br/>
+            This project currently may produce an acceptable output for fairly simple piano music - ie one instrument with 2 staves (treble and bass clef).
+            <ul>
+                <li class="lead">Anything other than a single treble stave and a single bass clef stave causes odd results.</li>
+                <li class="lead">Rests aren't described very well.</li>
+                <li class="lead">Pick-up bars cause odd results.</li>
+            </ul>
+        </p>
+
+        <p class="lead"><b>26th April 2020</b><br/>
+            Added Change Log, Contact Us and Privacy Policy pages with basic title and description for SEO purposes.</p>
+
+        <p class="lead"><b>22nd April 2020</b><br/>
+            Fixed error when long name for Dynamics is not known.</p>
+
+        <p class="lead"><b>19th April 2020</b><br/>
+            Tempos are inserted in midi files for the 2nd stave.  <b>To-do:</b> - insert current tempo at the start of segments.</p>
+    
+        <p class="lead"><b>13th April 2020</b><br/>
+            Added Google Analytics.  Configured robots.txt and noindex so that completed scores are not indexed or tracked.</p>
+    
+        <p class="lead"><b>5th April 2020</b><br/>
+            Fixed CORS error so that midi files are played - ie we can listen to the score - or sections of it.</p>
+
+        <p class="lead"><b>19th January 2020</b><br/>
+            Use 'bars at a time' from Options screen.</p>
+    
+        <p class="lead"><b>28th July 2019</b><br/>
+            Fixed 'unknown duration' for notes smaller than quavers.</p>
+
+        <p class="lead"><b>27th July 2019</b><br/>
+            Fixed key signature in preamble.</p>
+
+        <p class="lead"><b>21st July 2019</b><br/>
+            Fixed pitch ordering within beats and chords.</p>
+    
+    </div>
+
+{% endblock content %}
