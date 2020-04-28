@@ -34,7 +34,11 @@ class TSDynamic(TSEvent):
     long_name = None
 
     def __init__(self, long_name=None, short_name=None):
-        self.long_name = long_name
+        if (long_name!=None):
+            self.long_name = long_name.capitalize()
+        else:
+            self.long_name = short_name
+        
         self.short_name = short_name
 
     def render(self, context=None):
@@ -116,6 +120,7 @@ class Music21TalkingScore(TalkingScoreBase):
         '64th': 'hemi-demi-semi-quaver',
     }
 
+    last_tempo_inserted_index = 0 # insert_tempos() doesn't need to recheck MetronomeMarkBoundaries that have already been used
 
     def __init__(self, musicxml_filepath):
         self.filepath = os.path.realpath(musicxml_filepath)
@@ -238,7 +243,6 @@ class Music21TalkingScore(TalkingScoreBase):
 
         for element in measure.elements:
             element_type = type(element).__name__
-
             event = None
             hand = ('Left', 'Right')[part_id == 'P1-Staff1']
 
@@ -257,7 +261,7 @@ class Music21TalkingScore(TalkingScoreBase):
                     event.tie = element.tie.type
 
             elif element_type == 'Dynamic':
-                event = TSDynamic(long_name = element.longName.capitalize(), short_name=element.value)
+                event = TSDynamic(long_name = element.longName, short_name=element.value)
                 pitch_index = 0 # Always speak the dynamic first
                 hand = 'Both'
 
@@ -296,7 +300,7 @@ class Music21TalkingScore(TalkingScoreBase):
             if not os.path.exists(midi_filename):
                 self.score.write('midi', midi_filename)
             return midi_filename
-        elif len(parts) > 0:
+        elif len(parts) > 0: #individual parts
             for p in self.score.parts:
                 if p.id not in parts:
                     continue
@@ -304,9 +308,11 @@ class Music21TalkingScore(TalkingScoreBase):
                 midi_filename = os.path.join(output_path, "%s_p%s_%s_%s.mid" % ( base_filename, p.id, range_start, range_end ) )
                 if not os.path.exists(midi_filename):
                     midi_stream = p.measures(range_start, range_end)
+                    if p!=self.score.parts[0]: #part 0 already has tempos
+                        self.insert_tempos(midi_stream, self.score.parts[0].measure(range_start).offset)
                     midi_stream.write('midi', midi_filename)
                 return midi_filename
-        else:
+        else: #both hands
             midi_filename = os.path.join(output_path, "%s_%s_%s.mid" % ( base_filename, range_start, range_end ))
             if not os.path.exists(midi_filename):
                 midi_stream = self.score.measures(range_start, range_end)
@@ -314,6 +320,21 @@ class Music21TalkingScore(TalkingScoreBase):
             return midi_filename
 
         return None
+
+    #TODO need to make more efficient when working with multiple parts ie more than just the left hand piano part
+    #music21 might have a better way of doing this eg using context or something.  If part 0 is included then tempos are already present.
+    def insert_tempos(self, stream, offset_start):
+        for mmb in self.score.metronomeMarkBoundaries()[self.last_tempo_inserted_index:]:
+            if (mmb[0]>=offset_start+stream.duration.quarterLength): # ignore tempos that start after stream ends
+                return           
+            if (mmb[1]>offset_start):
+                if (mmb[0])<=offset_start:
+                    stream.insert(0, tempo.MetronomeMark(number=mmb[2].number))
+                    self.last_tempo_inserted_index+=1
+                else:
+                    stream.insert(mmb[0]-offset_start, tempo.MetronomeMark(number=mmb[2].number))
+                    self.last_tempo_inserted_index+=1
+       
 
     def map_octave(self, octave):
         return self._OCTAVE_MAP.get(octave, "?")
@@ -354,7 +375,7 @@ class HTMLTalkingScoreFormatter():
         return template.render({'settings' : self.settings,
                                 'basic_information': self.get_basic_information(),
                                 'preamble': self.get_preamble(),
-                                'full_score': os.path.join(web_path, os.path.basename(self.score.generate_midi_for_part_range(output_path=output_path))),
+                                'full_score': "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(self.score.generate_midi_for_part_range(output_path=output_path)),
                                 'music_segments': self.get_music_segments(output_path,web_path)
                                 })
 
@@ -393,17 +414,22 @@ class HTMLTalkingScoreFormatter():
 
 
             midi_filenames = {
-                'both': os.path.join(web_path, os.path.basename( self.score.generate_midi_for_part_range(bar_index, end_bar_index,output_path=output_path) ) ),
+                #'both': os.path.join(web_path, os.path.basename( self.score.generate_midi_for_part_range(bar_index, end_bar_index,output_path=output_path) ) ),
                 # 'right': os.path.join(web_path, os.path.basename( self.score.generate_midi_for_part_range(bar_index, end_bar_index, ['P1-Staff1'],output_path=output_path) ) ),
             }
+
+            both_hands_midi = self.score.generate_midi_for_part_range(bar_index, end_bar_index,
+                                                                     output_path=output_path)
+            midi_filenames['both'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(both_hands_midi)
+                
             left_hand_midi = self.score.generate_midi_for_part_range(bar_index, end_bar_index, ['P1-Staff2'],
                                                                      output_path=output_path)
             right_hand_midi = self.score.generate_midi_for_part_range(bar_index, end_bar_index, ['P1-Staff1'],
                                                                      output_path=output_path)
             if left_hand_midi is not None:
-                midi_filenames['left'] = os.path.join(web_path, os.path.basename(left_hand_midi))
+                midi_filenames['left'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(left_hand_midi)
             if right_hand_midi is not None:
-                midi_filenames['right'] = os.path.join(web_path, os.path.basename(right_hand_midi))
+                midi_filenames['right'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(right_hand_midi)
 
             music_segment = {'start_bar':bar_index, 'end_bar': end_bar_index, 'events_by_bar_and_beat': events_by_bar_and_beat, 'midi_filenames': midi_filenames }
             music_segments.append(music_segment)
@@ -414,7 +440,7 @@ class HTMLTalkingScoreFormatter():
 
 
 if __name__ == '__main__':
-
+    
     # testScoreFilePath = '../talkingscoresapp/static/data/macdowell-to-a-wild-rose.xml'
     testScoreFilePath = '../media/172a28455fa5cfbdaa4eecd5f63a0a2ebaddd92d569980fb402811b9cd5cce4a/MozartPianoSonata.xml'
     # testScoreFilePath = '../talkingscores/talkingscoresapp/static/data/bach-2-part-invention-no-13.xml'

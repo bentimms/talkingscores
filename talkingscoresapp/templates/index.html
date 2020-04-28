@@ -1,10 +1,20 @@
 {% extends "base_site.html" %}
 {% load staticfiles %}
 
+{% block title %}Talking Scores (Beta) - making musicXML files more accessible{% endblock %}
+{% block meta-description %}Open source project to convert MusicXML files to a spoken description with audio segments - to make sheet music more accessible to print impaired musicians {% endblock %}
+
 {% block content %}
     <h1>Talking Scores Beta</h1>
 
-    <p class="lead">Upload or provide a URL to a MusicXML file.</p>
+    <p class="lead">A Talking Score is a spoken representation of stave notation; often with recordings of the music being described.  They are designed to assist print impaired musicians to use sheet music. </p>
+
+    <p class="lead">Producing a talking score manually can be time consuming, is often not a straightforward process and may require aspects tailored to individual musicians.  This website aims to automatically produce a talking score from a MusicXML file.  </p> 
+        
+    <p class="lead">This is an <a href="https://github.com/bentimms/talkingscores" target="_blank">open source project</a> - currently undertaken by a very small team; working in our spare time.  It is a work in progress and has many known issues - and probably many unknown issues too!  Please see the <a href="/change-log">Change Log</a> for latest updates or <a href="/contact-us">contact us</a> with questions / feature requests etc. </p>
+    <hr>
+
+    <h3><b>Upload or provide a URL to a MusicXML file.</b></h3>
 
     <form class="form-horizontal" action="{% url 'index' %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
@@ -24,7 +34,7 @@
             </div>
         </div>
         <div class="form-group">
-            <div class="col-sm-offset-3 col-sm-6">or</div>
+            <div class="col-sm-offset-3 col-sm-6"><p class="lead">or</p></div>
         </div>
         <div class="form-group">
             <label for="id_url" class="col-sm-3 control-label">URL</label>
@@ -41,12 +51,12 @@
         </div>
     </form>
 
-    <br/>
-    <h3>Example scores</h3>
-
+    <hr>
+    <h3><b>Example scores</b></h3>
+    <p class="lead">These example scores have been produced by this website and should give a good idea of what a Talking Score is.  They might not have been produced by the latest version of the code.</p>
     <ul class="list-unstyled">
         {% for example_score in example_scores %}
-            <li><a href="{% static 'data/' %}{{ example_score }}">{{ example_score }}</a></li>
+            <li class="lead"><a href="{% static 'data/' %}{{ example_score }}">{{ example_score }}</a></li>
         {% endfor %}
     </ul>
     </div>

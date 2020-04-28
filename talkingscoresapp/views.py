@@ -1,5 +1,6 @@
 from django import forms
 from django.http import HttpResponse
+from django.http import FileResponse
 from django.template import loader
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -65,8 +66,13 @@ def score(request, id, filename):
 
     return HttpResponse(template.render(context, request))
 
+# View for midi files to serve with CORS header
+def midi(request, id, filename):
+    fr = FileResponse(open("staticfiles/data/" + id + "/" + filename, "rb"))
+    fr['Access-Control-Allow-Origin'] = '*'
+    return fr
 
-# View for the a particular score
+# View for a particular score
 def error(request, id, filename):
     template = loader.get_template('error.html')
 
@@ -83,6 +89,25 @@ def error(request, id, filename):
         form = NotifyEmailForm()
 
     context = {'id': id, 'filename': filename, 'form': form}
+    return HttpResponse(template.render(context, request))
+
+# View for change-log
+def change_log(request):
+    template = loader.get_template('change-log.html')
+    context = {}
+    return HttpResponse(template.render(context, request))
+
+
+# View for contact-us
+def contact_us(request):
+    template = loader.get_template('contact-us.html')
+    context = {}
+    return HttpResponse(template.render(context, request))
+
+# View for privacy-policy
+def privacy_policy(request):
+    template = loader.get_template('privacy-policy.html')
+    context = {}
     return HttpResponse(template.render(context, request))
 
 
@@ -115,23 +140,28 @@ def options(request, id, filename):
 
 # View for the main page
 def index(request):
+    err = " "
     if request.method == 'POST':
         form = MusicXMLSubmissionForm(request.POST)
         if form.is_valid():
 
             score = None
-            if 'filename' in request.FILES:
-                score = TSScore.from_uploaded_file(request.FILES['filename'])
-            elif form.cleaned_data.get('url', '') != '':
-                score = TSScore.from_url(form.cleaned_data['url'])
+            try:
+                if 'filename' in request.FILES:
+                    score = TSScore.from_uploaded_file(request.FILES['filename'])
+                elif form.cleaned_data.get('url', '') != '':
+                    score = TSScore.from_url(form.cleaned_data['url'])
 
-            if score is not None:
-                # Redirect to score
-                return redirect('score', score.id, score.filename)
+                if score is not None:
+                    # Redirect to score
+                    return redirect('score', score.id, score.filename)
+
+            except Exception as ex:
+                err = ex
 
         # If we get this far, there's a problem
-        form.add_error(None, "Please supply a valid MusicXML file or URL to a MusicXML file")
-
+        form.add_error(None, "An error has occurred...  " + str(err))
+    
     else:
         form = MusicXMLSubmissionForm()
 
