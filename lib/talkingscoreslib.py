@@ -307,35 +307,36 @@ class Music21TalkingScore(TalkingScoreBase):
 
                 midi_filename = os.path.join(output_path, "%s_p%s_%s_%s.mid" % ( base_filename, p.id, range_start, range_end ) )
                 if not os.path.exists(midi_filename):
-                    midi_stream = p.measures(range_start, range_end)
-                    if p!=self.score.parts[0]: #part 0 already has tempos
+                    midi_stream = p.measures(range_start, range_end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature', 'TempoIndication'))
+                    if p!=self.score.parts[0]: # only part 0 has tempos
                         self.insert_tempos(midi_stream, self.score.parts[0].measure(range_start).offset)
                     midi_stream.write('midi', midi_filename)
                 return midi_filename
-        else: #both hands
+        else: # both hands
             midi_filename = os.path.join(output_path, "%s_%s_%s.mid" % ( base_filename, range_start, range_end ))
             if not os.path.exists(midi_filename):
-                midi_stream = self.score.measures(range_start, range_end)
+                midi_stream = self.score.measures(range_start, range_end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature', 'TempoIndication'))
                 midi_stream.write('midi', midi_filename)
             return midi_filename
 
         return None
-
+       
     #TODO need to make more efficient when working with multiple parts ie more than just the left hand piano part
-    #music21 might have a better way of doing this eg using context or something.  If part 0 is included then tempos are already present.
-    def insert_tempos(self, stream, offset_start):
+    #music21 might have a better way of doing this.  If part 0 is included then tempos are already present.
+    def insert_tempos(self, stream, offset_start):       
+        if (self.last_tempo_inserted_index>0): # one tempo change might need to be in many segments - especially the last tempo change in the score
+            self.last_tempo_inserted_index-=1
         for mmb in self.score.metronomeMarkBoundaries()[self.last_tempo_inserted_index:]:
             if (mmb[0]>=offset_start+stream.duration.quarterLength): # ignore tempos that start after stream ends
                 return           
-            if (mmb[1]>offset_start):
-                if (mmb[0])<=offset_start:
+            if (mmb[1]>offset_start): # if mmb ends during the segment
+                if (mmb[0])<=offset_start: # starts before segment so insert it at the start of the stream
                     stream.insert(0, tempo.MetronomeMark(number=mmb[2].number))
                     self.last_tempo_inserted_index+=1
-                else:
+                else: # starts during segment so insert it part way through the stream
                     stream.insert(mmb[0]-offset_start, tempo.MetronomeMark(number=mmb[2].number))
                     self.last_tempo_inserted_index+=1
        
-
     def map_octave(self, octave):
         return self._OCTAVE_MAP.get(octave, "?")
         # return "%s %s" % (self._PITCH_MAP.get(pitch[-1], ''), pitch[0] )
