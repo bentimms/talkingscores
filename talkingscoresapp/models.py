@@ -11,10 +11,10 @@ from urllib.request import url2pathname
 import tempfile
 from talkingscoreslib import Music21TalkingScore, HTMLTalkingScoreFormatter
 
-log_format = "%(levelname)s %(asctime)s - %(message)s"
+log_format = "%(asctime)s - %(levelname)s - %(message)s"
 logging.basicConfig(filename=os.path.join(*(MEDIA_ROOT, "log1.txt")), format=log_format)
 logger = logging.getLogger(__name__)
-logger.fatal("hello - I'm testing a logger!!!")
+
 
 def hashfile(afile, hasher, blocksize=65536):
     buf = afile.read(blocksize)

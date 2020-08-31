@@ -13,6 +13,10 @@ from talkingscoreslib import Music21TalkingScore
 
 from talkingscoresapp.models import TSScore, TSScoreState
 
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import smtplib
+
 logger = logging.getLogger(__name__)
 
 class MusicXMLSubmissionForm(forms.Form):
@@ -36,11 +40,25 @@ class NotifyEmailForm(forms.Form):
     notify_email = forms.EmailField()
 
 
+def send_error_email(error_message):
+    msg = MIMEMultipart()
+    
+    password = os.environ['EMAIL_PASSWORD'] # in pythonanywhere this can be set in wsgi.py
+    msg['From'] = "talkingscores@gmail.com"
+    msg['To'] = "talkingscores@gmail.com"
+    msg['Subject'] = "Talking Scores Error"
+
+    msg.attach(MIMEText(error_message, 'plain'))
+    server = smtplib.SMTP('smtp.gmail.com: 587')
+    server.starttls()
+    server.login(msg['From'], password)
+    server.sendmail(msg['From'], msg['To'], msg.as_string())
+    server.quit()
+
 def process(request, id, filename):
     template = loader.get_template('processing.html')
     context = {'id': id, 'filename': filename}
     return HttpResponse(template.render(context, request))
-
 
 # View for the a particular score
 def score(request, id, filename):
@@ -79,10 +97,12 @@ def error(request, id, filename):
     if request.method == 'POST':
         form = NotifyEmailForm(request.POST)
         if form.is_valid():
-            # This should get picked up by the SMTP logging and emailed to me, but perhaps it should be sent
-            # specifically rather than use the logging mechanism
             logger.error("Notifications about score http://%s%s should go to %s" % (
-            request.get_host(), reverse('score', args=[id, filename]), form.cleaned_data['notify_email']))
+                        request.get_host(), reverse('score', args=[id, filename]), form.cleaned_data['notify_email']))
+            send_error_email(
+                            "Notifications about score http://%s%s should go to %s" % (
+                            request.get_host(), reverse('score', args=[id, filename]), 
+                            form.cleaned_data['notify_email']))
         else:
             logger.warn(str(form.errors))
     else:
