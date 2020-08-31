@@ -398,9 +398,25 @@ class HTMLTalkingScoreFormatter():
     def get_music_segments(self,output_path,web_path):
 
         music_segments = []
-
         number_of_bars = self.score.get_number_of_bars()
+        
+        #pickup bar
+        if self.score.score.parts[0].getElementsByClass('Measure')[0].number != self.score.score.parts[0].measures(1,2).getElementsByClass('Measure')[0].number:
+            events_by_bar_and_beat = self.score.get_events_for_bar_range(0, 1)
+            midi_filenames = {}
+            both_hands_midi = self.score.generate_midi_for_part_range(0, 0, output_path=output_path)
+            midi_filenames['both'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(both_hands_midi)
+            left_hand_midi = self.score.generate_midi_for_part_range(0, 0, ['P1-Staff2'], output_path=output_path)
+            right_hand_midi = self.score.generate_midi_for_part_range(0, 0, ['P1-Staff1'], output_path=output_path)
+            if left_hand_midi is not None:
+                midi_filenames['left'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(left_hand_midi)
+            if right_hand_midi is not None:
+                midi_filenames['right'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(right_hand_midi)
 
+            music_segment = {'start_bar':'0 - pickup', 'end_bar':'0 - pickup', 'events_by_bar_and_beat': events_by_bar_and_beat, 'midi_filenames': midi_filenames }
+            music_segments.append(music_segment)
+ 
+        #everything except the pickup
         for bar_index in range( 1, number_of_bars, self.settings['barsAtATime'] ):
             end_bar_index = bar_index + self.settings['barsAtATime'] - 1
             if end_bar_index > number_of_bars:
