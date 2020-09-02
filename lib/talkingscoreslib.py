@@ -64,6 +64,17 @@ class TSPitch():
         rendered_elements.append(self.pitch_name)
         return rendered_elements
 
+class TSRest(TSEvent):
+    pitch = None
+    def render(self, context=None):
+        rendered_elements = []
+        # Render the duration
+        rendered_elements.append(' '.join(super(TSRest, self).render(context)))
+        # Render the pitch
+        rendered_elements.append(' rest')
+        return rendered_elements
+
+
 class TSNote(TSEvent):
     pitch = None
 
@@ -112,6 +123,7 @@ class Music21TalkingScore(TalkingScoreBase):
     }
 
     _DURATION_MAP = {
+        'whole': 'semibreve',
         'half': 'minim',
         'quarter': 'crotchet',
         'eighth': 'quaver',
@@ -233,9 +245,13 @@ class Music21TalkingScore(TalkingScoreBase):
         for part in measures.parts:
             print("Processing part %s, bars %s to %s" % (part.id, start_bar, end_bar))
             # Iterate over the bars one at a time
+            # pickup bar has to request measures 0 to 1 above otherwise it returns an measures just has empty parts - so now restrict it just to bar 0...
+            if start_bar==0 and end_bar==1:
+                end_bar=0
             for bar_index in range(start_bar, end_bar + 1):
                 measure = part.measure(bar_index)
-                self.update_events_for_measure(measure, part.id, events_by_bar)
+                if measure is not None:
+                    self.update_events_for_measure(measure, part.id, events_by_bar)
 
         return events_by_bar
 
@@ -253,6 +269,10 @@ class Music21TalkingScore(TalkingScoreBase):
                 if element.tie:
                     event.tie = element.tie.type
 
+            elif element_type == 'Rest':
+                event = TSRest()
+                pitch_index = 0
+                
             elif element_type == 'Chord':
                 event = TSChord()
                 event.pitches = [ TSPitch(self.map_pitch(element_pitch), self.map_octave(element_pitch.octave), element_pitch.ps) for element_pitch in element.pitches ]
