@@ -77,9 +77,13 @@ class TSRest(TSEvent):
 
 class TSNote(TSEvent):
     pitch = None
+    expressions = []
 
     def render(self, context=None):
         rendered_elements = []
+        # Render the expressions
+        for exp in self.expressions:
+            rendered_elements.append(exp.name + ', ')
         # Render the duration
         rendered_elements.append(' '.join(super(TSNote, self).render(context)))
         # Render the pitch
@@ -130,6 +134,7 @@ class Music21TalkingScore(TalkingScoreBase):
         '16th': 'semi-quaver',
         '32nd': 'demi-semi-quaver',
         '64th': 'hemi-demi-semi-quaver',
+        'zero': 'grace note',
     }
 
     last_tempo_inserted_index = 0 # insert_tempos() doesn't need to recheck MetronomeMarkBoundaries that have already been used
@@ -268,7 +273,8 @@ class Music21TalkingScore(TalkingScoreBase):
                 pitch_index = element.pitch.ps
                 if element.tie:
                     event.tie = element.tie.type
-
+ 
+                event.expressions = element.expressions
             elif element_type == 'Rest':
                 event = TSRest()
                 pitch_index = 0
