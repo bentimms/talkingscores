@@ -64,11 +64,26 @@ class TSPitch():
         rendered_elements.append(self.pitch_name)
         return rendered_elements
 
+class TSRest(TSEvent):
+    pitch = None
+    def render(self, context=None):
+        rendered_elements = []
+        # Render the duration
+        rendered_elements.append(' '.join(super(TSRest, self).render(context)))
+        # Render the pitch
+        rendered_elements.append(' rest')
+        return rendered_elements
+
+
 class TSNote(TSEvent):
     pitch = None
+    expressions = []
 
     def render(self, context=None):
         rendered_elements = []
+        # Render the expressions
+        for exp in self.expressions:
+            rendered_elements.append(exp.name + ', ')
         # Render the duration
         rendered_elements.append(' '.join(super(TSNote, self).render(context)))
         # Render the pitch
@@ -112,12 +127,14 @@ class Music21TalkingScore(TalkingScoreBase):
     }
 
     _DURATION_MAP = {
+        'whole': 'semibreve',
         'half': 'minim',
         'quarter': 'crotchet',
         'eighth': 'quaver',
         '16th': 'semi-quaver',
         '32nd': 'demi-semi-quaver',
         '64th': 'hemi-demi-semi-quaver',
+        'zero': 'grace note',
     }
 
     last_tempo_inserted_index = 0 # insert_tempos() doesn't need to recheck MetronomeMarkBoundaries that have already been used
@@ -233,9 +250,13 @@ class Music21TalkingScore(TalkingScoreBase):
         for part in measures.parts:
             print("Processing part %s, bars %s to %s" % (part.id, start_bar, end_bar))
             # Iterate over the bars one at a time
+            # pickup bar has to request measures 0 to 1 above otherwise it returns an measures just has empty parts - so now restrict it just to bar 0...
+            if start_bar==0 and end_bar==1:
+                end_bar=0
             for bar_index in range(start_bar, end_bar + 1):
                 measure = part.measure(bar_index)
-                self.update_events_for_measure(measure, part.id, events_by_bar)
+                if measure is not None:
+                    self.update_events_for_measure(measure, part.id, events_by_bar)
 
         return events_by_bar
 
@@ -252,7 +273,12 @@ class Music21TalkingScore(TalkingScoreBase):
                 pitch_index = element.pitch.ps
                 if element.tie:
                     event.tie = element.tie.type
-
+ 
+                event.expressions = element.expressions
+            elif element_type == 'Rest':
+                event = TSRest()
+                pitch_index = 0
+                
             elif element_type == 'Chord':
                 event = TSChord()
                 event.pitches = [ TSPitch(self.map_pitch(element_pitch), self.map_octave(element_pitch.octave), element_pitch.ps) for element_pitch in element.pitches ]
@@ -307,35 +333,36 @@ class Music21TalkingScore(TalkingScoreBase):
 
                 midi_filename = os.path.join(output_path, "%s_p%s_%s_%s.mid" % ( base_filename, p.id, range_start, range_end ) )
                 if not os.path.exists(midi_filename):
-                    midi_stream = p.measures(range_start, range_end)
-                    if p!=self.score.parts[0]: #part 0 already has tempos
+                    midi_stream = p.measures(range_start, range_end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature', 'TempoIndication'))
+                    if p!=self.score.parts[0]: # only part 0 has tempos
                         self.insert_tempos(midi_stream, self.score.parts[0].measure(range_start).offset)
                     midi_stream.write('midi', midi_filename)
                 return midi_filename
-        else: #both hands
+        else: # both hands
             midi_filename = os.path.join(output_path, "%s_%s_%s.mid" % ( base_filename, range_start, range_end ))
             if not os.path.exists(midi_filename):
-                midi_stream = self.score.measures(range_start, range_end)
+                midi_stream = self.score.measures(range_start, range_end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature', 'TempoIndication'))
                 midi_stream.write('midi', midi_filename)
             return midi_filename
 
         return None
-
+       
     #TODO need to make more efficient when working with multiple parts ie more than just the left hand piano part
-    #music21 might have a better way of doing this eg using context or something.  If part 0 is included then tempos are already present.
-    def insert_tempos(self, stream, offset_start):
+    #music21 might have a better way of doing this.  If part 0 is included then tempos are already present.
+    def insert_tempos(self, stream, offset_start):       
+        if (self.last_tempo_inserted_index>0): # one tempo change might need to be in many segments - especially the last tempo change in the score
+            self.last_tempo_inserted_index-=1
         for mmb in self.score.metronomeMarkBoundaries()[self.last_tempo_inserted_index:]:
             if (mmb[0]>=offset_start+stream.duration.quarterLength): # ignore tempos that start after stream ends
                 return           
-            if (mmb[1]>offset_start):
-                if (mmb[0])<=offset_start:
+            if (mmb[1]>offset_start): # if mmb ends during the segment
+                if (mmb[0])<=offset_start: # starts before segment so insert it at the start of the stream
                     stream.insert(0, tempo.MetronomeMark(number=mmb[2].number))
                     self.last_tempo_inserted_index+=1
-                else:
+                else: # starts during segment so insert it part way through the stream
                     stream.insert(mmb[0]-offset_start, tempo.MetronomeMark(number=mmb[2].number))
                     self.last_tempo_inserted_index+=1
        
-
     def map_octave(self, octave):
         return self._OCTAVE_MAP.get(octave, "?")
         # return "%s %s" % (self._PITCH_MAP.get(pitch[-1], ''), pitch[0] )
@@ -397,9 +424,25 @@ class HTMLTalkingScoreFormatter():
     def get_music_segments(self,output_path,web_path):
 
         music_segments = []
-
         number_of_bars = self.score.get_number_of_bars()
+        
+        #pickup bar
+        if self.score.score.parts[0].getElementsByClass('Measure')[0].number != self.score.score.parts[0].measures(1,2).getElementsByClass('Measure')[0].number:
+            events_by_bar_and_beat = self.score.get_events_for_bar_range(0, 1)
+            midi_filenames = {}
+            both_hands_midi = self.score.generate_midi_for_part_range(0, 0, output_path=output_path)
+            midi_filenames['both'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(both_hands_midi)
+            left_hand_midi = self.score.generate_midi_for_part_range(0, 0, ['P1-Staff2'], output_path=output_path)
+            right_hand_midi = self.score.generate_midi_for_part_range(0, 0, ['P1-Staff1'], output_path=output_path)
+            if left_hand_midi is not None:
+                midi_filenames['left'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(left_hand_midi)
+            if right_hand_midi is not None:
+                midi_filenames['right'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(right_hand_midi)
 
+            music_segment = {'start_bar':'0 - pickup', 'end_bar':'0 - pickup', 'events_by_bar_and_beat': events_by_bar_and_beat, 'midi_filenames': midi_filenames }
+            music_segments.append(music_segment)
+ 
+        #everything except the pickup
         for bar_index in range( 1, number_of_bars, self.settings['barsAtATime'] ):
             end_bar_index = bar_index + self.settings['barsAtATime'] - 1
             if end_bar_index > number_of_bars:
