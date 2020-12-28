@@ -13,8 +13,8 @@ from talkingscoreslib import Music21TalkingScore, HTMLTalkingScoreFormatter
 
 log_format = "%(asctime)s - %(levelname)s - %(message)s"
 logging.basicConfig(filename=os.path.join(*(MEDIA_ROOT, "log1.txt")), format=log_format)
-logger = logging.getLogger(__name__)
-
+logger = logging.getLogger("TSScore")
+    
 
 def hashfile(afile, hasher, blocksize=65536):
     buf = afile.read(blocksize)
@@ -33,7 +33,7 @@ class TSScoreState(object):
 class TSScore(object):
     
     # I can't seem to find a way of getting the class object in scope at this point to dynamically populate the name
-    logger = logging.getLogger("%s.%s" % (__name__, "TSScore"))
+    logger = logging.getLogger("TSScore")
     logger.level = logging.DEBUG
     def __init__(self, id=None, initial_state=TSScoreState.IDLE, url=None, filename=None):
         self._state = initial_state

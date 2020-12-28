@@ -7,11 +7,13 @@ import os
 import json
 import math
 import pprint
+import logging, logging.handlers, logging.config
 from music21 import *
 us = environment.UserSettings()
 us['warnings'] = 0
 from abc import ABCMeta, abstractmethod
 from jinja2 import Template
+logger = logging.getLogger("TSScore")
 
 class TSEvent(object, metaclass=ABCMeta):
     duration = None
@@ -318,7 +320,7 @@ class Music21TalkingScore(TalkingScoreBase):
         return chord_pitches_by_octave
 
     def generate_midi_for_part_range(self, range_start=None, range_end=None, parts=[], output_path=""):
-
+        
         base_filename = os.path.splitext(os.path.basename(self.filepath))[0]
         if range_start is None and range_end is None:
             # Export the whole score
@@ -336,12 +338,19 @@ class Music21TalkingScore(TalkingScoreBase):
                     midi_stream = p.measures(range_start, range_end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature', 'TempoIndication'))
                     if p!=self.score.parts[0]: # only part 0 has tempos
                         self.insert_tempos(midi_stream, self.score.parts[0].measure(range_start).offset)
+                    #music21 v6.3.0 tries to expand repeats - which causes error if segment only includes the start repeat mark
+                    for m in midi_stream.getElementsByClass('Measure'):
+                        m.removeByClass('Repeat')   
                     midi_stream.write('midi', midi_filename)
                 return midi_filename
         else: # both hands
             midi_filename = os.path.join(output_path, "%s_%s_%s.mid" % ( base_filename, range_start, range_end ))
             if not os.path.exists(midi_filename):
                 midi_stream = self.score.measures(range_start, range_end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature', 'TempoIndication'))
+                #music21 v6.3.0 tries to expand repeats - which causes error if segment only includes the start repeat mark
+                for pa in midi_stream.getElementsByClass('Part'):
+                    for m in pa.getElementsByClass('Measure'):
+                        m.removeByClass('Repeat') 
                 midi_stream.write('midi', midi_filename)
             return midi_filename
 
@@ -423,6 +432,7 @@ class HTMLTalkingScoreFormatter():
 
     def get_music_segments(self,output_path,web_path):
 
+        logger.info("Start of get_music_segments")
         music_segments = []
         number_of_bars = self.score.get_number_of_bars()
         
@@ -477,6 +487,8 @@ class HTMLTalkingScoreFormatter():
             music_segment = {'start_bar':bar_index, 'end_bar': end_bar_index, 'events_by_bar_and_beat': events_by_bar_and_beat, 'midi_filenames': midi_filenames }
             music_segments.append(music_segment)
 
+        logger.info("End of get_music_segments")
+        
         return music_segments
 
 
