@@ -9,10 +9,12 @@ import math
 import pprint
 import logging, logging.handlers, logging.config
 from music21 import *
+from lib.musicAnalyser import *
 us = environment.UserSettings()
 us['warnings'] = 0
 from abc import ABCMeta, abstractmethod
 from jinja2 import Template
+from _datetime import datetime
 logger = logging.getLogger("TSScore")
 
 class TSEvent(object, metaclass=ABCMeta):
@@ -140,10 +142,13 @@ class Music21TalkingScore(TalkingScoreBase):
     }
 
     last_tempo_inserted_index = 0 # insert_tempos() doesn't need to recheck MetronomeMarkBoundaries that have already been used
+    music_analyser = None;
 
     def __init__(self, musicxml_filepath):
         self.filepath = os.path.realpath(musicxml_filepath)
         self.score = converter.parse(musicxml_filepath)
+        self.music_analyser = MusicAnalyser()
+        self.music_analyser.setScore(self.score)
         super(Music21TalkingScore, self).__init__()
 
     def get_title(self):
