@@ -17,7 +17,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("TSScore")
 
 class MusicXMLSubmissionForm(forms.Form):
     filename = forms.FileField(label='MusicXML file', widget=forms.ClearableFileInput(attrs={'class': 'form-control'}),
