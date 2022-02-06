@@ -79,11 +79,16 @@ class MusicAnalyser:
             self.analyse_parts[part_index].set_part(p)
             part_index = part_index + 1
         
-        self.repetition_left_hand = self.analyse_parts[1].describe_repetition()
         self.repetition_right_hand = self.analyse_parts[0].describe_repetition()
-
-        self.summary_left_hand = self.analyse_parts[1].describe_summary()
         self.summary_right_hand = self.analyse_parts[0].describe_summary()
+        
+        #temporary fix to make it work with only a single part
+        if len(self.analyse_parts)>1:
+            self.repetition_left_hand = self.analyse_parts[1].describe_repetition()
+            self.summary_left_hand = self.analyse_parts[1].describe_summary()
+        else:
+            self.repetition_left_hand = ""
+            self.summary_left_hand = ""
 
 
 class AnalysePart:

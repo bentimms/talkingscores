@@ -5,68 +5,86 @@
 {% block noindex %}<meta name="robots" content="noindex" />{% endblock %}
 
 {% block content %}
-    <h1>Summary:</h1>
-    <p class="lead">Right hand: {{summary_right_hand}}</p>
-    <p class="lead">Left hand: {{summary_left_hand}}</p>
-    
-    <h1>Repetition:</h1>
-    <p class="lead">Right hand: {{repetition_right_hand}}</p>
-    <p class="lead">Left hand: {{repetition_left_hand}}</p>
-    
-    <h1>Options</h1>
-    <p class="lead">Select which parts and how many bars at a time you would like.</p>
 
-    <div class="row text-left">
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger" role="alert">
+            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+
+    {% if form.errors %}
+        <div class="alert alert-danger" role="alert">
+            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            {{ form.errors }}
+        </div>
+    {% endif %}
+
+    <h1>Detected features:</h1>
+    <div class="row text-left lead">
         <div class="col-md-6 col-md-offset-3">
-            <h3>Detected features:</h3>
             <ul class="list-unstyled">
-                <li>{{ title }} by {{ composer }}</li>
-                <li>{{ instruments|length }} instrument{{ instruments|length|pluralize }}:
-                    {% for instrument in instruments %}
-    {% if forloop.first %}{% else %}
-        {% if forloop.last %} and {% else %}, {% endif %}
-    {% endif %}{{instrument}}
-{% endfor %} </li>
-                <li>Time signature of {{ time_signature }}</li>
-                <li>Key signature of {{ key_signature }}</li>
-                <li>Tempo: {{ tempo }}</li>
-                <li>{{ number_of_bars }} bars</li>
+                <li>{{ score_info.title }} by {{ score_info.composer }}</li>
+                <li>{{ score_info.instruments|length }} instrument{{ score_info.instruments|length|pluralize }}:
+                {% for instrument in score_info.instruments %}
+                    {% if forloop.first %}{% else %}
+                        {% if forloop.last %} and {% else %}, {% endif %}
+                    {% endif %}{{instrument}}
+                {% endfor %} </li>
+                <li>Time signature of {{ score_info.time_signature }}</li>
+                <li>Key signature of {{ score_info.key_signature }}</li>
+                <li>Tempo: {{ score_info.tempo }}</li>
+                <li>{{ score_info.number_of_bars }} bars</li>
             </ul>
         </div>
     </div>
 
+    <h1>Summary:</h1>
     <div class="row text-left">
         <div class="col-md-6 col-md-offset-3">
-            <h3>Options:</h3>
-
-        {% if form.non_field_errors %}
-        <div class="alert alert-danger" role="alert">
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-            {{ form.non_field_errors }}
+            <p class="lead">Right hand: {{score_info.summary_right_hand}}</p>
+            <p class="lead">Left hand: {{score_info.summary_left_hand}}</p>
         </div>
-        {% endif %}
-
-
-        {% if form.errors %}
-        <div class="alert alert-danger" role="alert">
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-            {{ form.errors }}
+    </div>
+    
+    <h1>Repetition:</h1>
+    <div class="row text-left">
+        <div class="col-md-6 col-md-offset-3">        <p class="lead">Right hand: {{score_info.repetition_right_hand}}</p>
+            <p class="lead">Left hand: {{score_info.repetition_left_hand}}</p>
         </div>
-        {% endif %}
-
+    </div>
+    <h1>Options</h1>
+    
+    <div class="row text-left">
+        <div class="col-md-6 col-md-offset-3">
+            
             <form class="form-horizontal" method="post">
                 {% csrf_token %}
-                <div class="form-group">
-                    <p>Selected instruments:</p>
-
-                    {% for instrument in instruments %}
+                
+                <div id="" class="form-group">
                     <div class="checkbox">
-                        <label for="instrument_{{ forloop.counter }}">
-                            <input type="checkbox" id="instrument_{{ forloop.counter }}" value="checked" checked="checked"
-                                   aria-label="{{ instrument }}">
-                            {{ instrument }}
-                        </label>
+                        <input type="checkbox" name="chk_playAll" id="chk_playAll" value="checked" checked="checked" aria-label="Play all parts"/>
+                        <label for="chk_playAll">Play all parts</label>
                     </div>
+                    <div class="checkbox">
+                        <input type="checkbox" name="chk_playSelected" id="chk_playSelected" value="checked" checked="checked" aria-label="Play all selected parts together"/>
+                        <label for="chk_playSelected">Play all selected parts together</label>
+                    </div>
+                    <div class="checkbox">
+                        <input type="checkbox" name="chk_playUnselected" id="chk_playUnselected" value="checked" checked="checked" aria-label="Play all not selected parts together"/>
+                        <label for="chk_playUnselected">Play all not selected parts together</label>
+                    </div>
+                </div>
+    
+                <h3>Selected instruments:</h3>
+                <div id="" class="form-group">                    
+                    {% for instrument in score_info.instruments %}
+                        <div class="checkbox">
+                            <input type="checkbox" name="instruments" id="instrument_{{ forloop.counter }}" value="{{ forloop.counter }}" checked="checked" aria-label="{{ instrument }}">
+                            <label for="instrument_{{ forloop.counter }}">
+                                {{ instrument }}
+                            </label>
+                        </div>
                     {% endfor %}
                 </div>
                 <div class="form-group">

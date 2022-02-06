@@ -405,7 +405,11 @@ class HTMLTalkingScoreFormatter():
             'pitchBeforeDuration': False,
             'describeBy': 'beat',
             'handsTogether': True,
-            'barsAtATime': int(options["bars_at_a_time"])
+            'barsAtATime': int(options["bars_at_a_time"]),
+            'playAll':options["play_all"],
+            'playSelected':options["play_selected"],
+            'playUnselected':options["play_unselected"],
+            'instruments':options["instruments"],
         }
 
     def generateHTML(self,output_path="",web_path=""):

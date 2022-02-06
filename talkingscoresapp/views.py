@@ -31,9 +31,13 @@ class MusicXMLUploadForm(forms.Form):
 
 
 class TalkingScoreGenerationOptionsForm(forms.Form):
-    # selected_instruments = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple, label="Selected instruments")
+    chk_playAll = forms.BooleanField(required=False)
+    chk_playSelected = forms.BooleanField(required=False)
+    chk_playUnselected = forms.BooleanField(required=False)
+    
+    instruments = forms.CharField(widget=forms.SelectMultiple, required=False,)
     bars_at_a_time = forms.ChoiceField(choices=(('1', 1), ('2', 2), ('4', 4), ('8', 8)), initial=4,
-                                       label="Bars at a time")
+        label="Bars at a time")
 
 
 class NotifyEmailForm(forms.Form):
@@ -141,21 +145,31 @@ def options(request, id, filename):
 
     if request.method == 'POST':
         form = TalkingScoreGenerationOptionsForm(request.POST)
-        if form.is_valid():
+        if (form.is_valid() and form.cleaned_data["instruments"]!='') :
+            instruments = list(map(int, eval(form.cleaned_data["instruments"])) )
             # Write out the options
-            options = {"bars_at_a_time": int(form.cleaned_data["bars_at_a_time"])}
+            options = {}
+            options["bars_at_a_time"] = int(form.cleaned_data["bars_at_a_time"])
+            options["play_all"] = form.cleaned_data["chk_playAll"]
+            options["play_selected"] = form.cleaned_data["chk_playSelected"]
+            options["play_unselected"] = form.cleaned_data["chk_playUnselected"]
+            options["instruments"] = instruments
+            
             with open(options_path, "w") as options_fh:
                 json.dump(options, options_fh)
             return redirect('process', id, filename)
         else:
             logger.warn("Invalid form..." + str(form.errors))
+            print ( str(form.errors))
+            if form.cleaned_data["instruments"]=='':
+                form.add_error("instruments", "Please select at least instrument to describe...")
+            
     else:
         form = TalkingScoreGenerationOptionsForm()
 
-    score_info['options_form'] = form
-
     template = loader.get_template('options.html')
-    return HttpResponse(template.render(score_info, request))
+    context = {'form': form, 'score_info':score_info}
+    return HttpResponse(template.render(context, request))
 
 
 # View for the main page
