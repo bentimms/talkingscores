@@ -703,7 +703,7 @@ class AnalysePart:
         if self.gracenote_count>1:
             gracenote_percent = (self.gracenote_count/self.possible_accidental_count)*100
             summary+=self.describe_percentage_uncommon(gracenote_percent) + " grace notes"
-            dist = (self.describe_distribution(self.count_gracenotes_in_measures, self.accidental_count))
+            dist = (self.describe_distribution(self.count_gracenotes_in_measures, self.gracenote_count))
             if not dist == "":
                 summary += " (" + dist + ")."
         
@@ -904,8 +904,9 @@ class AnalysePart:
                 
                 previous_note_pitch = -1
                 self.total_rest_duration += d
-                self.rest_count += 1
-            elif n.isChord:
+                self.rest_count += 1 
+            elif n.isChord and type(n).__name__ != 'ChordSymbol': 
+                #todo - maybe analyse ChordSymbol too - it won't cause an error - just thinks they are grace notes and affects counting notes / pitches / repetition etc
                 ai.event_type = 'c'
                 
                 d = n.duration.quarterLength
@@ -1006,6 +1007,8 @@ class AnalysePart:
                 if d==0.0:
                     measure_gracenotes += 1
                     self.gracenote_count += 1
+                    print("I'm a grace note note...")
+                    print(n)
                 if d>0.0: #bigger than a grace note because they are counted separately
                     if self.rhythm_note_dictionary.get(d) == None:
                         self.rhythm_note_dictionary[d] = [event_index]
@@ -1072,7 +1075,10 @@ class AnalysePart:
                     self.measure_intervals_analyse_indexes_all[current_measure] = [index, len(self.measure_intervals_analyse_indexes_dictionary[index])-1]
                 
         print("\n Done set_part() - note count = " + str(self.note_count) + " chord count = " + str(self.chord_count) + " rest count = " + str(self.rest_count) + "...")
-                
+
+        print("chord pitches dictionary = ")
+        print(self.chord_pitches_dictionary)
+
         self.repeated_measures_lists = self.calculate_repeated_measures_lists(self.measure_analyse_indexes_dictionary, False)
         self.measure_groups_list = self.calculate_measure_groups(self.measure_analyse_indexes_all, self.measure_analyse_indexes_dictionary)
         self.repeated_measures_not_in_groups_dictionary = self.calculate_repeated_measures_not_in_groups(self.measure_analyse_indexes_dictionary.values(), self.measure_groups_list)
