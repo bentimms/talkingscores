@@ -200,14 +200,38 @@ class Music21TalkingScore(TalkingScoreBase):
         return len(self.score.parts[0].getElementsByClass('Measure'))
 
     def get_instruments(self):
-        instruments = []
-        for instrument in self.score.flat.getInstruments():
-            if len(instruments) == 0 or instruments[-1] != instrument.partName:
-                instruments.append(instrument.partName)
-        return instruments
+        self.part_instruments={} # key = instrument (1 based), value = ["part name", 1st part, number of parts] 
+        instrument_names=[] #still needed for Info / Options page
+        ins_count = 1
+        for c, instrument in enumerate(self.score.flat.getInstruments()):
+            if len(self.part_instruments) == 0 or self.part_instruments[ins_count-1][0] != instrument.partName:
+                self.part_instruments[ins_count] = [instrument.partName, c, 1]
+                instrument_names.append(instrument.partName)
+                ins_count+=1
+            else:
+                self.part_instruments[ins_count-1][2]+=1
+        print("part_instruments = " + str(self.part_instruments))
+        return instrument_names 
+
+    def compare_parts_with_selected_instruments(self, settings):
+        self.selected_instruments = []
+        self.unselected_instruments = []
+        for ins in self.part_instruments.keys():
+            if ins in settings['instruments']:
+                self.selected_instruments.append(ins)
+            else:
+                self.unselected_instruments.append(ins)
+        
+        if len(self.unselected_instruments)==0: #All instruments selected - so no unselected instruments to play
+            settings['playUnselected'] = False
+        if len(self.selected_instruments)==len(self.part_instruments) and settings['playAll']==True: #played by Play All
+            settings['playSelected'] = False
+        if len(self.selected_instruments)==1: #played by individual part
+            settings['playSelected'] = False
 
     def get_number_of_parts(self):
-        return len(self.get_instruments())
+        self.get_instruments()
+        return len(self.part_instruments)
 
     def get_bar_range(self, range_start, range_end):
         measures = self.score.measures(range_start, range_end)
@@ -439,9 +463,15 @@ class HTMLTalkingScoreFormatter():
             'number_of_parts': self.score.get_number_of_parts(),
         }
 
+    
+
     def get_music_segments(self,output_path,web_path):
 
         logger.info("Start of get_music_segments")
+        self.score.compare_parts_with_selected_instruments(self.settings)
+        print ("Settings...")
+        print (self.settings)
+        
         music_segments = []
         number_of_bars = self.score.get_number_of_bars()
         
