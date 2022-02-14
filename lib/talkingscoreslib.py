@@ -130,6 +130,13 @@ class Music21TalkingScore(TalkingScoreBase):
         7: 'top'
     }
 
+    _DOTS_MAP = {
+        0 : '',
+        1 : 'dotted ',
+        2 : 'double dotted ',
+        3 : 'triple dotted '
+    }
+
     _DURATION_MAP = {
         'whole': 'semibreve',
         'half': 'minim',
@@ -331,8 +338,7 @@ class Music21TalkingScore(TalkingScoreBase):
 
             # This test isn't WORKING
             # if TSEvent.__class__ in event.__class__.__bases__:
-            event.duration = self.map_duration(element.duration)
-
+            event.duration = self.map_dots(element.duration.dots) + self.map_duration(element.duration)
             events\
                 .setdefault(measure.measureNumber, {})\
                 .setdefault(math.floor(element.beat), {})\
@@ -429,7 +435,8 @@ class Music21TalkingScore(TalkingScoreBase):
     def map_duration(self, duration):
         return self._DURATION_MAP.get(duration.type, 'Unknown duration %s'%duration.type)
 
-
+    def map_dots(self, dots):
+        return self._DOTS_MAP.get(dots)
 
 class HTMLTalkingScoreFormatter():
 
