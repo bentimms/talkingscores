@@ -207,14 +207,18 @@ class Music21TalkingScore(TalkingScoreBase):
         return len(self.score.parts[0].getElementsByClass('Measure'))
 
     def get_instruments(self):
-        #instrument.Name = eg Piano, instrument.partId = 1.  A piano has 2 staves ie two parts with the same name and same ID.  But if you have a second piano, it will have the same name but a different partId
+        #eg instrument.Name = Piano, instrument.partId = 1.  A piano has 2 staves ie two parts with the same name and same ID.  But if you have a second piano, it will have the same name but a different partId
         self.part_instruments={} # key = instrument (1 based), value = ["part name", 1st part, number of parts, instrument.partId] 
         instrument_names=[] #still needed for Info / Options page
         ins_count = 1
         for c, instrument in enumerate(self.score.flat.getInstruments()):
             if len(self.part_instruments) == 0 or self.part_instruments[ins_count-1][3] != instrument.partId:
-                self.part_instruments[ins_count] = [instrument.partName, c, 1, instrument.partId]
-                instrument_names.append(instrument.partName)
+                pname = instrument.partName
+                if pname==None:
+                    pname = "Instrument  " + str(ins_count) + " (unnamed)"
+                self.part_instruments[ins_count] = [pname, c, 1, instrument.partId]
+                instrument_names.append(pname)
+                
                 ins_count+=1
             else:
                 self.part_instruments[ins_count-1][2]+=1
