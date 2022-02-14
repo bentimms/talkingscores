@@ -22,6 +22,13 @@
 <p>Music, both hands, a bar at a time, beat by beat</p>
 
 <a href="#" onClick="MIDIjs.play('{{ full_score }}'); return false;">Play entire score</a><br/>
+
+{% if settings['playSelected'] == True %}
+    <a href="#" onClick="MIDIjs.play('{{ full_score_selected }}'); return false;">Play entire score (selected parts)</a><br/>    
+{% endif %}
+{% if settings['playUnselected'] == True %}
+    <a href="#" onClick="MIDIjs.play('{{ full_score_unselected }}'); return false;">Play entire score (unselected parts)</a><br/>    
+{% endif %}    
 <a href="#" onClick="MIDIjs.stop(); return false;">Stop playback</a>
 
 {% for segment in music_segments %}

@@ -1076,9 +1076,6 @@ class AnalysePart:
                 
         print("\n Done set_part() - note count = " + str(self.note_count) + " chord count = " + str(self.chord_count) + " rest count = " + str(self.rest_count) + "...")
 
-        print("chord pitches dictionary = ")
-        print(self.chord_pitches_dictionary)
-
         self.repeated_measures_lists = self.calculate_repeated_measures_lists(self.measure_analyse_indexes_dictionary, False)
         self.measure_groups_list = self.calculate_measure_groups(self.measure_analyse_indexes_all, self.measure_analyse_indexes_dictionary)
         self.repeated_measures_not_in_groups_dictionary = self.calculate_repeated_measures_not_in_groups(self.measure_analyse_indexes_dictionary.values(), self.measure_groups_list)
