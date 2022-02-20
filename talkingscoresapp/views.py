@@ -39,6 +39,18 @@ class TalkingScoreGenerationOptionsForm(forms.Form):
     bars_at_a_time = forms.ChoiceField(choices=(('1', 1), ('2', 2), ('4', 4), ('8', 8)), initial=4,
         label="Bars at a time")
 
+    pitch_description = forms.CharField(widget=forms.Select, required=False,)
+    rhythm_description = forms.CharField(widget=forms.Select, required=False,)
+    dot_position = forms.CharField(widget=forms.Select, required=False,)
+    rhythm_announcement = forms.CharField(widget=forms.Select, required=False,)
+    octave_description = forms.CharField(widget=forms.Select, required=False,)
+    octave_position = forms.CharField(widget=forms.Select, required=False,)
+    octave_announcement = forms.CharField(widget=forms.Select, required=False,)
+    
+    colour_position = forms.CharField(widget=forms.Select, required=False,)
+    chk_colourPitch = forms.BooleanField(required=False)
+    chk_colourRhythm = forms.BooleanField(required=False)
+    chk_colourOctave = forms.BooleanField(required=False)
 
 class NotifyEmailForm(forms.Form):
     notify_email = forms.EmailField()
@@ -154,6 +166,19 @@ def options(request, id, filename):
             options["play_selected"] = form.cleaned_data["chk_playSelected"]
             options["play_unselected"] = form.cleaned_data["chk_playUnselected"]
             options["instruments"] = instruments
+            
+            options["pitch_description"] = form.cleaned_data["pitch_description"]
+            options["rhythm_description"] = form.cleaned_data["rhythm_description"]
+            options["dot_position"] = form.cleaned_data["dot_position"]
+            options["rhythm_announcement"] = form.cleaned_data["rhythm_announcement"]
+            options["octave_description"] = form.cleaned_data["octave_description"]
+            options["octave_position"] = form.cleaned_data["octave_position"]
+            options["octave_announcement"] = form.cleaned_data["octave_announcement"]
+            
+            options["colour_position"] = form.cleaned_data["colour_position"]
+            options["colour_pitch"] = form.cleaned_data["chk_colourPitch"]
+            options["colour_rhythm"] = form.cleaned_data["chk_colourRhythm"]
+            options["colour_octave"] = form.cleaned_data["chk_colourOctave"]
             
             with open(options_path, "w") as options_fh:
                 json.dump(options, options_fh)

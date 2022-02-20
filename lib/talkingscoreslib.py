@@ -17,6 +17,8 @@ from jinja2 import Template
 from _datetime import datetime
 logger = logging.getLogger("TSScore")
 
+global settings
+
 class TSEvent(object, metaclass=ABCMeta):
     duration = None
     beat = None
@@ -24,10 +26,35 @@ class TSEvent(object, metaclass=ABCMeta):
     part = None
     tie = None
 
-    def render(self, context=None):
+    def render_colourful_output(self, text, pitchLetter, elementType):
+        figureNoteColours = {"C" : "red", "D" : "brown", "E" : "grey", "F" : "blue", "G" : "black", "A" : "yellow", "B" : "green"}
+        figureNoteContrastTextColours = {"C" : "white", "D" : "white", "E" : "white", "F" : "white", "G" : "white", "A" : "black", "B" : "white"}
+        toRender = text
+        
+        if settings["colourPosition"]!="None":
+            doColours = False
+            if (elementType=="pitch" and settings["colourPitch"]==True):
+                doColours=True  
+            if (elementType=="rhythm" and settings["colourRhythm"]==True):
+                doColours=True  
+            if (elementType=="octave" and settings["colourOctave"]==True):
+                doColours=True  
+                          
+            if doColours==True:
+                if settings["colourPosition"]=="background":
+                    toRender = "<span style='color:" + figureNoteContrastTextColours[pitchLetter] + "; background-color:" + figureNoteColours[pitchLetter] + ";'>" + text + "</span>"
+                elif settings["colourPosition"]=="text":
+                    toRender = "<span style='color:" + figureNoteColours[pitchLetter] + ";'>" + text + "</span>"
+
+        return toRender
+
+    def render(self, context=None, noteLetter=None):
         rendered_elements = []
-        if (context is None or context.duration != self.duration) and self.duration:
-            rendered_elements.append(self.duration)
+        if (context is None or context.duration != self.duration or settings['rhythmAnnouncement']=="everyNote") and self.duration:
+            if (noteLetter!=None):
+                rendered_elements.append(self.render_colourful_output(self.duration, noteLetter, "rhythm"))
+            else:
+                rendered_elements.append(self.duration)
 
         if self.tie:
             rendered_elements.append("tie %s" % self.tie)
@@ -48,25 +75,57 @@ class TSDynamic(TSEvent):
     def render(self, context=None):
         return [self.long_name]
 
-class TSPitch():
+class TSPitch(TSEvent):
     pitch_name = None
     octave = None
+    pitch_letter = None #used for looking up colour based on pitch and fixes sharp / flat problem when modulus and the pitch number
 
-    PITCH_NUMBER_DIFFERENCE_THRESHOLD = 4 # A major third
-
-    def __init__(self, pitch_name, octave, pitch_number):
+    def __init__(self, pitch_name, octave, pitch_number, pitch_letter):
         self.pitch_name = pitch_name
         self.octave = octave
         self.pitch_number = pitch_number
+        self.pitch_letter = pitch_letter
 
     def render(self, context=None):
+        global settings
         rendered_elements = []
-        if context is None \
-                or (context.octave != self.octave
-                    and abs(context.pitch_number - self.pitch_number) > self.PITCH_NUMBER_DIFFERENCE_THRESHOLD):
-            rendered_elements.append(self.octave)
-        rendered_elements.append(self.pitch_name)
+        if settings['octavePosition']=="before":
+            rendered_elements.append(self.render_octave(context))
+        rendered_elements.append(self.render_colourful_output(self.pitch_name, self.pitch_letter, "pitch"))
+        if settings['octavePosition']=="after":
+            rendered_elements.append(self.render_octave(context))
+        
         return rendered_elements
+
+    def render_octave(self, context=None):
+        show_octave = False
+        if settings['octaveAnnouncement']=="brailleRules":
+            if context==None:
+                show_octave=True
+            else:
+                pitch_difference = abs(context.pitch_number - self.pitch_number)
+                #if it is a 3rd or less, don't say octave
+                if pitch_difference<=4:
+                    show_octave=False # it already is...
+                #if it is a 4th or 5th and octave changes, say octave
+                elif pitch_difference>=5 and pitch_difference<=7:
+                    if context.octave != self.octave:
+                        show_octave=True
+                #if it is more than a 5th, say octave
+                else:
+                    show_octave = True
+        elif settings['octaveAnnouncement']=="everyNote":
+            show_octave=True
+        elif settings['octaveAnnouncement']=="firstNote" and context==None:
+            show_octave=True
+        elif settings['octaveAnnouncement']=="onChange":
+            if context==None or (context!=None and context.octave != self.octave):
+                show_octave=True
+        
+        if show_octave:
+            return self.render_colourful_output(self.octave, self.pitch_letter, "octave")
+        else:
+            return ""
 
 class TSRest(TSEvent):
     pitch = None
@@ -89,7 +148,7 @@ class TSNote(TSEvent):
         for exp in self.expressions:
             rendered_elements.append(exp.name + ', ')
         # Render the duration
-        rendered_elements.append(' '.join(super(TSNote, self).render(context)))
+        rendered_elements.append(' '.join(super(TSNote, self).render(context, self.pitch.pitch_letter)))
         # Render the pitch
         rendered_elements.append(' '.join(self.pitch.render(getattr(context, 'pitch', None))))
         return rendered_elements
@@ -130,6 +189,16 @@ class Music21TalkingScore(TalkingScoreBase):
         7: 'top'
     }
 
+    _OCTAVE_FIGURENOTES_MAP = {
+        1: 'bottom',
+        2: 'cross',
+        3: 'square',
+        4: 'circle',
+        5: 'triangle',
+        6: 'higher',
+        7: 'top'
+    }
+
     _DOTS_MAP = {
         0 : '',
         1 : 'dotted ',
@@ -146,6 +215,16 @@ class Music21TalkingScore(TalkingScoreBase):
         '32nd': 'demi-semi-quaver',
         '64th': 'hemi-demi-semi-quaver',
         'zero': 'grace note',
+    }
+
+    _PITCH_FIGURENOTES_MAP = {
+        'C': 'red',
+        'D': 'brown',
+        'E': 'grey',
+        'F': 'blue',
+        'G': 'black',
+        'A': 'yellow',
+        'B': 'green',
     }
 
     last_tempo_inserted_index = 0 # insert_tempos() doesn't need to recheck MetronomeMarkBoundaries that have already been used
@@ -225,7 +304,8 @@ class Music21TalkingScore(TalkingScoreBase):
         print("part_instruments = " + str(self.part_instruments))
         return instrument_names 
 
-    def compare_parts_with_selected_instruments(self, settings):
+    def compare_parts_with_selected_instruments(self):
+        global settings
         self.selected_instruments = []
         self.unselected_instruments = []
         for ins in self.part_instruments.keys():
@@ -312,7 +392,7 @@ class Music21TalkingScore(TalkingScoreBase):
 
             if element_type == 'Note':
                 event = TSNote()
-                event.pitch = TSPitch( self.map_pitch(element.pitch), self.map_octave(element.pitch.octave), element.pitch.ps )
+                event.pitch = TSPitch( self.map_pitch(element.pitch), self.map_octave(element.pitch.octave), element.pitch.ps, element.pitch.name[0] )
                 pitch_index = element.pitch.ps
                 if element.tie:
                     event.tie = element.tie.type
@@ -324,7 +404,7 @@ class Music21TalkingScore(TalkingScoreBase):
                 
             elif element_type == 'Chord':
                 event = TSChord()
-                event.pitches = [ TSPitch(self.map_pitch(element_pitch), self.map_octave(element_pitch.octave), element_pitch.ps) for element_pitch in element.pitches ]
+                event.pitches = [ TSPitch(self.map_pitch(element_pitch), self.map_octave(element_pitch.octave), element_pitch.ps, element_pitch.name[0]) for element_pitch in element.pitches ]
                 pitch_index = element.bass().ps # Take the bottom note of the chord for ordering
                 if element.tie:
                     event.tie = element.tie.type
@@ -342,7 +422,13 @@ class Music21TalkingScore(TalkingScoreBase):
 
             # This test isn't WORKING
             # if TSEvent.__class__ in event.__class__.__bases__:
-            event.duration = self.map_dots(element.duration.dots) + self.map_duration(element.duration)
+            event.duration = ""
+            if settings['dotPosition']=="before":
+                event.duration = self.map_dots(element.duration.dots)
+            event.duration += self.map_duration(element.duration)
+            if settings['dotPosition']=="after":
+                event.duration += " " + self.map_dots(element.duration.dots)
+
             events\
                 .setdefault(measure.measureNumber, {})\
                 .setdefault(math.floor(element.beat), {})\
@@ -427,31 +513,58 @@ class Music21TalkingScore(TalkingScoreBase):
                     self.last_tempo_inserted_index+=1
        
     def map_octave(self, octave):
-        return self._OCTAVE_MAP.get(octave, "?")
+        global settings
+        if settings['octaveDescription']=="figureNotes":
+            return self._OCTAVE_FIGURENOTES_MAP.get(octave, "?")
+        elif settings['octaveDescription']=="name":
+            return self._OCTAVE_MAP.get(octave, "?")
+        elif settings['octaveDescription']=="none":
+            return ""
+        elif settings['octaveDescription']=="number":
+            return str(octave)
+        
         # return "%s %s" % (self._PITCH_MAP.get(pitch[-1], ''), pitch[0] )
 
     def map_pitch(self, pitch):
-        pitch_name = pitch.name[0]
-        if pitch.accidental and pitch.accidental.displayStatus:
+        global settings
+        if settings['pitchDescription']=="figureNotes":
+            pitch_name = self._PITCH_FIGURENOTES_MAP.get(pitch.name[0], "?")
+        if settings['pitchDescription']=="noteName":
+            pitch_name = pitch.name[0]
+        elif settings['pitchDescription']=="none":
+            pitch_name = ""
+        
+        if pitch.accidental and pitch.accidental.displayStatus and pitch_name!="":
             pitch_name = "%s %s" % (pitch_name, pitch.accidental.fullName)
         return pitch_name
 
     def map_duration(self, duration):
-        return self._DURATION_MAP.get(duration.type, 'Unknown duration %s'%duration.type)
+        global settings
+        if settings['rhythmDescription']=="american":
+            return duration.type
+        elif settings['rhythmDescription']=="british":
+            return self._DURATION_MAP.get(duration.type, 'Unknown duration %s'%duration.type)
+        elif settings['rhythmDescription']=="none":
+            return ""
+        
 
     def map_dots(self, dots):
-        return self._DOTS_MAP.get(dots)
+        if settings['rhythmDescription']=="none":
+            return ""
+        else:
+            return self._DOTS_MAP.get(dots)
 
 class HTMLTalkingScoreFormatter():
 
-    def __init__(self, talking_score, settings={}):
-
+    def __init__(self, talking_score):
+        global settings
+        
         self.score:Music21TalkingScore = talking_score
 
         options_path = self.score.filepath + '.opts'
         with open(options_path, "r") as options_fh:
                 options = json.load(options_fh)
-        self.settings = {
+        settings = {
             'pitchBeforeDuration': False,
             'describeBy': 'beat',
             'handsTogether': True,
@@ -460,33 +573,45 @@ class HTMLTalkingScoreFormatter():
             'playSelected':options["play_selected"],
             'playUnselected':options["play_unselected"],
             'instruments':options["instruments"],
+            'pitchDescription':options["pitch_description"],
+            'rhythmDescription':options["rhythm_description"],
+            'dotPosition':options["dot_position"],
+            'rhythmAnnouncement':options["rhythm_announcement"],
+            'octaveDescription':options["octave_description"],
+            'octavePosition':options["octave_position"],
+            'octaveAnnouncement':options["octave_announcement"],
+            'colourPosition':options["colour_position"],
+            'colourPitch':options["colour_pitch"],
+            'colourRhythm':options["colour_rhythm"],
+            'colourOctave':options["colour_octave"],
         }
+        
 
     def generateHTML(self,output_path="",web_path=""):
-
+        global settings
         from jinja2 import Environment, FileSystemLoader
         env = Environment(loader=FileSystemLoader(os.path.dirname(__file__)))
         template = env.get_template('talkingscore.html')
         
         self.score.get_instruments()
-        self.score.compare_parts_with_selected_instruments(self.settings)
+        self.score.compare_parts_with_selected_instruments()
         print ("Settings...")
-        print (self.settings)
+        print (settings)
         
         full_score_selected = ""
-        if self.settings['playSelected']==True:
+        if settings['playSelected']==True:
             full_score_selected =  "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(self.score.generate_midi_for_instruments(output_path=output_path, add_instruments=self.score.selected_instruments, postfix_filename="s"))
         full_score_unselected = ""
-        if self.settings['playUnselected']==True:
+        if settings['playUnselected']==True:
             full_score_unselected =  "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(self.score.generate_midi_for_instruments(output_path=output_path, add_instruments=self.score.unselected_instruments, postfix_filename="u"))
         
-        return template.render({'settings' : self.settings,
+        return template.render({'settings' : settings,
                                 'basic_information': self.get_basic_information(),
                                 'preamble': self.get_preamble(),
                                 'full_score': "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(self.score.generate_midi_for_part_range(output_path=output_path)),
                                 'full_score_selected': "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(full_score_selected),
                                 'full_score_unselected': "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(full_score_unselected),
-                                'music_segments': self.get_music_segments(output_path,web_path)
+                                'music_segments': self.get_music_segments(output_path,web_path, )
                                 })
 
     def get_basic_information(self):
@@ -507,7 +632,7 @@ class HTMLTalkingScoreFormatter():
     
 
     def get_music_segments(self,output_path,web_path):
-
+        global settings
         logger.info("Start of get_music_segments")
         
         music_segments = []
@@ -530,12 +655,12 @@ class HTMLTalkingScoreFormatter():
             music_segments.append(music_segment)
  
         #everything except the pickup
-        for bar_index in range( 1, number_of_bars, self.settings['barsAtATime'] ):
-            end_bar_index = bar_index + self.settings['barsAtATime'] - 1
+        for bar_index in range( 1, number_of_bars+1, settings['barsAtATime'] ):
+            end_bar_index = bar_index + settings['barsAtATime'] - 1
             if end_bar_index > number_of_bars:
                 end_bar_index = number_of_bars
 
-            events_by_bar_and_beat = self.score.get_events_for_bar_range(bar_index, end_bar_index)
+            events_by_bar_and_beat = self.score.get_events_for_bar_range(bar_index, end_bar_index, )
             # for offset, events in events_for_bar_range.iteritems():
             # events_ordered_by_beat = OrderedDict(sorted(events_for_bar_range.items(), key=lambda t: t[0]))
 
