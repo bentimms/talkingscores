@@ -227,6 +227,16 @@ class Music21TalkingScore(TalkingScoreBase):
         'B': 'green',
     }
 
+    _PITCH_PHONETIC_MAP = {
+        'C': 'charlie',
+        'D': 'bravo',
+        'E': 'echo',
+        'F': 'foxtrot',
+        'G': 'golf',
+        'A': 'alpha',
+        'B': 'bravo',
+    }
+
     last_tempo_inserted_index = 0 # insert_tempos() doesn't need to recheck MetronomeMarkBoundaries that have already been used
     music_analyser = None;
 
@@ -533,6 +543,8 @@ class Music21TalkingScore(TalkingScoreBase):
             pitch_name = pitch.name[0]
         elif settings['pitchDescription']=="none":
             pitch_name = ""
+        elif settings['pitchDescription']=="phonetic":
+            pitch_name = self._PITCH_PHONETIC_MAP.get(pitch.name[0], "?")
         
         if pitch.accidental and pitch.accidental.displayStatus and pitch_name!="":
             pitch_name = "%s %s" % (pitch_name, pitch.accidental.fullName)
