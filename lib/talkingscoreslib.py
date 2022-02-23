@@ -458,9 +458,26 @@ class Music21TalkingScore(TalkingScoreBase):
     
     def generate_midi_for_instruments(self, range_start=None, range_end=None, add_instruments=[], output_path="", postfix_filename=""):
         s = stream.Score(id='temp')
-        for ins in add_instruments:
-            for pi in range (self.part_instruments[ins][1], self.part_instruments[ins][1]+self.part_instruments[ins][2]):
-                s.insert(self.score.parts[pi])
+        
+        if range_start is None and range_end is None:
+            for ins in add_instruments:
+                for pi in range (self.part_instruments[ins][1], self.part_instruments[ins][1]+self.part_instruments[ins][2]):
+                    s.insert(self.score.parts[pi])
+        else: #specific measures
+            postfix_filename += "_" + str(range_start) + str(range_end)
+            for ins in add_instruments:
+                firstPart = True
+                for pi in range (self.part_instruments[ins][1], self.part_instruments[ins][1]+self.part_instruments[ins][2]):
+                    pi_measures = self.score.parts[pi].measures(range_start, range_end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature', 'TempoIndication'))
+                    if firstPart:
+                        if pi!=0: # only part 0 has tempos
+                            self.insert_tempos(pi_measures, self.score.parts[0].measure(range_start).offset)
+                        firstPart=False
+                    
+                    #music21 v6.3.0 tries to expand repeats - which causes error if segment only includes the start repeat mark
+                    for m in pi_measures.getElementsByClass('Measure'):
+                        m.removeByClass('Repeat') 
+                    s.insert(pi_measures)            
         
         base_filename = os.path.splitext(os.path.basename(self.filepath))[0]
         midi_filename = os.path.join(output_path, "%s%s.mid" % ( base_filename, postfix_filename ) )
@@ -623,7 +640,8 @@ class HTMLTalkingScoreFormatter():
                                 'full_score': "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(self.score.generate_midi_for_part_range(output_path=output_path)),
                                 'full_score_selected': "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(full_score_selected),
                                 'full_score_unselected': "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(full_score_unselected),
-                                'music_segments': self.get_music_segments(output_path,web_path, )
+                                'music_segments': self.get_music_segments(output_path,web_path, ),
+                                'instruments' : self.score.part_instruments,
                                 })
 
     def get_basic_information(self):
@@ -649,10 +667,15 @@ class HTMLTalkingScoreFormatter():
         
         music_segments = []
         number_of_bars = self.score.get_number_of_bars()
-        
         #pickup bar
         if self.score.score.parts[0].getElementsByClass('Measure')[0].number != self.score.score.parts[0].measures(1,2).getElementsByClass('Measure')[0].number:
             events_by_bar_and_beat = self.score.get_events_for_bar_range(0, 1)
+            
+            selected_instruments_midis = {}
+            for index, ins in enumerate(self.score.selected_instruments):
+                midi_path = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(self.score.generate_midi_for_instruments(range_start=0, range_end=0, output_path=output_path, add_instruments=[ins], postfix_filename="ins"+str(index)))
+                selected_instruments_midis[ins] = {"ins":ins,  "midi":midi_path}
+               
             midi_filenames = {}
             both_hands_midi = self.score.generate_midi_for_part_range(0, 0, output_path=output_path)
             midi_filenames['both'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(both_hands_midi)
@@ -663,8 +686,9 @@ class HTMLTalkingScoreFormatter():
             if right_hand_midi is not None:
                 midi_filenames['right'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(right_hand_midi)
 
-            music_segment = {'start_bar':'0 - pickup', 'end_bar':'0 - pickup', 'events_by_bar_and_beat': events_by_bar_and_beat, 'midi_filenames': midi_filenames }
+            music_segment = {'start_bar':'0 - pickup', 'end_bar':'0 - pickup', 'events_by_bar_and_beat': events_by_bar_and_beat, 'midi_filenames': midi_filenames, 'selected_instruments_midis':selected_instruments_midis }
             music_segments.append(music_segment)
+            number_of_bars-=1
  
         #everything except the pickup
         for bar_index in range( 1, number_of_bars+1, settings['barsAtATime'] ):
@@ -679,6 +703,11 @@ class HTMLTalkingScoreFormatter():
             # pp = pprint.PrettyPrinter(indent=4)
             # pp.pprint(events_by_bar_and_beat)
 
+            selected_instruments_midis = {}
+            for index, ins in enumerate(self.score.selected_instruments):
+                midi_path = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(self.score.generate_midi_for_instruments(range_start=bar_index, range_end=end_bar_index, output_path=output_path, add_instruments=[ins], postfix_filename="ins"+str(index)))
+                selected_instruments_midis[ins] = {"ins":ins,  "midi":midi_path}
+            
 
             midi_filenames = {
                 #'both': os.path.join(web_path, os.path.basename( self.score.generate_midi_for_part_range(bar_index, end_bar_index,output_path=output_path) ) ),
@@ -698,7 +727,7 @@ class HTMLTalkingScoreFormatter():
             if right_hand_midi is not None:
                 midi_filenames['right'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(right_hand_midi)
 
-            music_segment = {'start_bar':bar_index, 'end_bar': end_bar_index, 'events_by_bar_and_beat': events_by_bar_and_beat, 'midi_filenames': midi_filenames }
+            music_segment = {'start_bar':bar_index, 'end_bar': end_bar_index, 'events_by_bar_and_beat': events_by_bar_and_beat, 'midi_filenames': midi_filenames, 'selected_instruments_midis':selected_instruments_midis }
             music_segments.append(music_segment)
 
         logger.info("End of get_music_segments")

@@ -39,6 +39,13 @@
     <br/><a href="#" onClick="MIDIjs.play('{{ segment.midi_filenames['left'] }}'); return false;">Play bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, left hand</a>
     <br/><a href="#" onClick="MIDIjs.play('{{ segment.midi_filenames['right'] }}'); return false;">Play bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, right hand</a>
 
+    <br/><br/>
+    <b>Instrument MIDIs</b><br/>
+    {% for index, ins in segment.selected_instruments_midis.items() %}
+        <a href="#" onClick="MIDIjs.play('{{ ins.midi }}'); return false;">Play - {{instruments[ins.ins][0]}} - bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, </a><br/>
+    {% endfor %}
+    <br/><br/>
+
     {#  Loop over each bar pulling out the beat-based dictionaries #}
     {% for bar, events_for_beats in segment.events_by_bar_and_beat|dictsort %}
         {% if not loop.first %}<br/><br/>{% endif %}
