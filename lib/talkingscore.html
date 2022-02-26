@@ -43,6 +43,11 @@
     <b>Instrument MIDIs</b><br/>
     {% for index, ins in segment.selected_instruments_midis.items() %}
         <a href="#" onClick="MIDIjs.play('{{ ins.midi }}'); return false;">Play - {{instruments[ins.ins][0]}} - bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, </a><br/>
+        <li style="margin-left:15px; list-style-type:none;">
+            {% for midipart in ins.midi_parts %}
+                <a href="#" onClick="MIDIjs.play('{{ midipart }}'); return false;">{{part_names[instruments[ins.ins][1] + loop.index-1 ]}}  </a><br/>
+            {% endfor %}
+        </li>
     {% endfor %}
     <br/><br/>
 
@@ -53,7 +58,7 @@
 
         {#  Loop over each beat pulling out the hand-based dictionaries #}
         {% for beat, events_per_hand in events_for_beats.items() %}
-{#            {% if not loop.first %}<br/>{% endif %}#}
+{#          {% if not loop.first %}<br/>{% endif %}#}
             <div>Beat {{ beat | int  }}:
             {#  Loop over each hand #}
             {% for hand in ('Both', 'Left', 'Right', 'BothAfter') %}
