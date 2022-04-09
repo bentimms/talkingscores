@@ -359,8 +359,11 @@ class AnalysePart:
         
     # do two measures have matching pitch / rhythm / intervals etc    
     def is_measure_used_at(self, indexes_all, current_measure_index, check_measure_index):
+        #todo - these two checks are in case a measure doesn't have anything in then won't be added as a key to the dictionary...
         if not check_measure_index in indexes_all:
             return False
+        elif not current_measure_index in indexes_all:
+            return False 
         else:    
             if (indexes_all[current_measure_index][0]==indexes_all[check_measure_index][0]):
                 return True
@@ -447,7 +450,7 @@ class AnalysePart:
                 #eg if 4 is used at 6, check if 5 is used at 7
                 if gap>1:
                     group_size=1
-                    while (self.is_measure_used_at(from_indexes_all, look_at_measure + group_size, look_at_measure + group_size + gap) and group_size<gap):
+                    while (group_size<gap and (look_at_measure + group_size + gap) in from_indexes_all) and (self.is_measure_used_at(from_indexes_all, look_at_measure + group_size, look_at_measure + group_size + gap)):
                         group_size+=1
                     
                     group_size-=1
@@ -845,6 +848,7 @@ class AnalysePart:
         for n in self.part.flat.notesAndRests:
             #the start of a new measure
             if (n.measureNumber>current_measure):
+                #todo - if a measure doesn't have any notes or rests then it won't be added to measure_indexes etc and will cause errors later when looking for groups etc
                 self.measure_indexes[n.measureNumber] = event_index
                 current_measure = n.measureNumber
                 if (len(measure_analyse_indexes.analyse_indexes)>0): #first time through will be empty
@@ -1075,6 +1079,9 @@ class AnalysePart:
                     self.measure_intervals_analyse_indexes_all[current_measure] = [index, len(self.measure_intervals_analyse_indexes_dictionary[index])-1]
                 
         print("\n Done set_part() - note count = " + str(self.note_count) + " chord count = " + str(self.chord_count) + " rest count = " + str(self.rest_count) + "...")
+
+        print("self.measure_analyse_indexes_all")
+        print(self.measure_analyse_indexes_all)
 
         self.repeated_measures_lists = self.calculate_repeated_measures_lists(self.measure_analyse_indexes_dictionary, False)
         self.measure_groups_list = self.calculate_measure_groups(self.measure_analyse_indexes_all, self.measure_analyse_indexes_dictionary)
