@@ -1,4 +1,4 @@
 Django>=2.2.10
-Jinja2==2.10.1
+Jinja2==2.11.3
 music21==6.3.0
 requests==2.22.0
