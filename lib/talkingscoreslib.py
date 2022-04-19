@@ -599,7 +599,7 @@ class Music21TalkingScore(TalkingScoreBase):
 
     def map_pitch(self, pitch):
         global settings
-        if settings['pitchDescription']=="figureNotes":
+        if settings['pitchDescription']=="colourNotes":
             pitch_name = self._PITCH_FIGURENOTES_MAP.get(pitch.name[0], "?")
         if settings['pitchDescription']=="noteName":
             pitch_name = pitch.name[0]
