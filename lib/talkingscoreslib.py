@@ -725,18 +725,8 @@ class HTMLTalkingScoreFormatter():
             for index, ins in enumerate(self.score.selected_instruments):
                 midis = self.score.generate_midi_for_instruments(prefix="/midis/" + os.path.basename(web_path) + "/", range_start=0, range_end=0, output_path=output_path, add_instruments=[ins], postfix_filename="ins"+str(index))
                 selected_instruments_midis[ins] = {"ins":ins,  "midi":midis[0], "midi_parts":midis[1]}
-               
-            midi_filenames = {}
-            both_hands_midi = self.score.generate_midi_for_part_range(0, 0, output_path=output_path)
-            midi_filenames['both'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(both_hands_midi)
-            left_hand_midi = self.score.generate_midi_for_part_range(0, 0, ['P1-Staff2'], output_path=output_path)
-            right_hand_midi = self.score.generate_midi_for_part_range(0, 0, ['P1-Staff1'], output_path=output_path)
-            if left_hand_midi is not None:
-                midi_filenames['left'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(left_hand_midi)
-            if right_hand_midi is not None:
-                midi_filenames['right'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(right_hand_midi)
 
-            music_segment = {'start_bar':'0 - pickup', 'end_bar':'0 - pickup', 'events_by_bar_and_beat': events_by_bar_and_beat, 'midi_filenames': midi_filenames, 'selected_instruments_midis':selected_instruments_midis }
+            music_segment = {'start_bar':'0 - pickup', 'end_bar':'0 - pickup', 'events_by_bar_and_beat': events_by_bar_and_beat, 'selected_instruments_midis':selected_instruments_midis }
             music_segments.append(music_segment)
             number_of_bars-=1
  
@@ -758,26 +748,7 @@ class HTMLTalkingScoreFormatter():
                 midis = self.score.generate_midi_for_instruments(prefix="/midis/" + os.path.basename(web_path) + "/", range_start=bar_index, range_end=end_bar_index, output_path=output_path, add_instruments=[ins], postfix_filename="ins"+str(index))
                 selected_instruments_midis[ins] = {"ins":ins,  "midi":midis[0], "midi_parts":midis[1]}
             
-
-            midi_filenames = {
-                #'both': os.path.join(web_path, os.path.basename( self.score.generate_midi_for_part_range(bar_index, end_bar_index,output_path=output_path) ) ),
-                # 'right': os.path.join(web_path, os.path.basename( self.score.generate_midi_for_part_range(bar_index, end_bar_index, ['P1-Staff1'],output_path=output_path) ) ),
-            }
-
-            both_hands_midi = self.score.generate_midi_for_part_range(bar_index, end_bar_index,
-                                                                     output_path=output_path)
-            midi_filenames['both'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(both_hands_midi)
-                
-            left_hand_midi = self.score.generate_midi_for_part_range(bar_index, end_bar_index, ['P1-Staff2'],
-                                                                     output_path=output_path)
-            right_hand_midi = self.score.generate_midi_for_part_range(bar_index, end_bar_index, ['P1-Staff1'],
-                                                                     output_path=output_path)
-            if left_hand_midi is not None:
-                midi_filenames['left'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(left_hand_midi)
-            if right_hand_midi is not None:
-                midi_filenames['right'] = "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(right_hand_midi)
-
-            music_segment = {'start_bar':bar_index, 'end_bar': end_bar_index, 'events_by_bar_and_beat': events_by_bar_and_beat, 'midi_filenames': midi_filenames, 'selected_instruments_midis':selected_instruments_midis }
+            music_segment = {'start_bar':bar_index, 'end_bar': end_bar_index, 'events_by_bar_and_beat': events_by_bar_and_beat, 'selected_instruments_midis':selected_instruments_midis }
             music_segments.append(music_segment)
 
         logger.info("End of get_music_segments")

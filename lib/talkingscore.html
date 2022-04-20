@@ -35,10 +35,6 @@
 
     <h2>Bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}</h2>
 
-    <a href="#" onClick="MIDIjs.play('{{ segment.midi_filenames['both'] }}'); return false;">Play bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, both hands</a>
-    <br/><a href="#" onClick="MIDIjs.play('{{ segment.midi_filenames['left'] }}'); return false;">Play bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, left hand</a>
-    <br/><a href="#" onClick="MIDIjs.play('{{ segment.midi_filenames['right'] }}'); return false;">Play bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, right hand</a>
-
     <br/><br/>
     <b>Instrument MIDIs</b><br/>
     {% for index, ins in segment.selected_instruments_midis.items() %}
@@ -58,7 +54,7 @@
 
         {#  Loop over each beat pulling out the hand-based dictionaries #}
         {% for beat, events_per_hand in events_for_beats.items() %}
-{#          {% if not loop.first %}<br/>{% endif %}#}
+            {# {% if not loop.first %}<br/>{% endif %}#}
             <div>Beat {{ beat | int  }}:
             {#  Loop over each hand #}
             {% for hand in ('Both', 'Left', 'Right', 'BothAfter') %}
