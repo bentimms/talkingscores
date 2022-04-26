@@ -102,6 +102,14 @@ def score(request, id, filename):
 
 # View for midi files to serve with CORS header
 def midi(request, id, filename):
+    type = request.GET.get('type')
+    start_measure = request.GET.get('starMeasure')
+    end_measure = request.GET.get('endMeasure')
+    instrument = request.GET.get('instrument')
+    part = request.GET.get('part')
+    print ("GET type = " + str(type))
+    print ("GET instrument = " + str(instrument))
+    print ("GET part = " + str(part))
     fr = FileResponse(open("staticfiles/data/" + id + "/" + filename, "rb"))
     fr['Access-Control-Allow-Origin'] = '*'
     return fr
