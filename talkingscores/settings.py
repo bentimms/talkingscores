@@ -27,7 +27,7 @@ SECRET_KEY = 'y+-8s4elpz(oge_o42txk#0i5=u9gd0)3q&u+y^+cs#tj9qv1#'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['www.talkingscores.co.uk', '127.0.0.1']
+ALLOWED_HOSTS = ['www.talkingscores.co.uk', 'www.talkingscores.org', '127.0.0.1']
 
 
 # Application definition
