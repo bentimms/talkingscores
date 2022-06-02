@@ -368,7 +368,7 @@ class Music21TalkingScore(TalkingScoreBase):
                 last  = spanner.getLast()
                 if first.measureNumber is None or last.measureNumber is None:
                     continue
-                pitch_index = 0
+                description_order = 0
                 voice = 1
 
                 if first.measureNumber >= start_bar and first.measureNumber <= end_bar:
@@ -378,7 +378,7 @@ class Music21TalkingScore(TalkingScoreBase):
                         .setdefault(math.floor(first.beat), {})\
                         .setdefault('Both', {})\
                         .setdefault(voice, {})\
-                        .setdefault(pitch_index, [])\
+                        .setdefault(description_order, [])\
                         .append(event)
 
                 if last.measureNumber >= start_bar and last.measureNumber <= end_bar:
@@ -389,12 +389,12 @@ class Music21TalkingScore(TalkingScoreBase):
                         .setdefault(math.floor(last.beat) + last.duration.quarterLength - 1, {})\
                         .setdefault('BothAfter', {})\
                         .setdefault(voice, {})\
-                        .setdefault(pitch_index, [])\
+                        .setdefault(description_order, [])\
                         .append(event)
 
         measures = self.score.measures(start_bar, end_bar)
         for part in measures.parts:
-            print("Processing part %s, bars %s to %s" % (part.id, start_bar, end_bar))
+            print("\n\nProcessing part %s, bars %s to %s" % (part.id, start_bar, end_bar))
             # Iterate over the bars one at a time
             # pickup bar has to request measures 0 to 1 above otherwise it returns an measures just has empty parts - so now restrict it just to bar 0...
             if start_bar==0 and end_bar==1:
@@ -416,25 +416,25 @@ class Music21TalkingScore(TalkingScoreBase):
             if element_type == 'Note':
                 event = TSNote()
                 event.pitch = TSPitch( self.map_pitch(element.pitch), self.map_octave(element.pitch.octave), element.pitch.ps, element.pitch.name[0] )
-                pitch_index = element.pitch.ps
+                description_order = 1
                 if element.tie:
                     event.tie = element.tie.type
  
                 event.expressions = element.expressions
             elif element_type == 'Rest':
                 event = TSRest()
-                pitch_index = 0
+                description_order = 1
                 
             elif element_type == 'Chord':
                 event = TSChord()
                 event.pitches = [ TSPitch(self.map_pitch(element_pitch), self.map_octave(element_pitch.octave), element_pitch.ps, element_pitch.name[0]) for element_pitch in element.pitches ]
-                pitch_index = element.bass().ps # Take the bottom note of the chord for ordering
+                description_order = 1
                 if element.tie:
                     event.tie = element.tie.type
 
             elif element_type == 'Dynamic':
                 event = TSDynamic(long_name = element.longName, short_name=element.value)
-                pitch_index = 0 # Always speak the dynamic first
+                description_order = 0 # Always speak the dynamic first
                 hand = 'Both'
 
             elif element_type == 'Voice':
@@ -457,7 +457,7 @@ class Music21TalkingScore(TalkingScoreBase):
                 .setdefault(math.floor(element.beat), {})\
                 .setdefault(hand, {})\
                 .setdefault(voice, {})\
-                .setdefault(pitch_index, [])\
+                .setdefault(description_order, [])\
                 .append(event)
 
 
