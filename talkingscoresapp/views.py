@@ -9,6 +9,8 @@ import sys
 import json
 import logging, logging.handlers, logging.config
 from talkingscores.settings import BASE_DIR, MEDIA_ROOT
+from lib.midiHandler import *
+
 from talkingscoreslib import Music21TalkingScore
 
 from talkingscoresapp.models import TSScore, TSScoreState
@@ -101,16 +103,11 @@ def score(request, id, filename):
     return HttpResponse(template.render(context, request))
 
 # View for midi files to serve with CORS header
+# use GET query string to generate the correct midi file
 def midi(request, id, filename):
-    type = request.GET.get('type')
-    start_measure = request.GET.get('starMeasure')
-    end_measure = request.GET.get('endMeasure')
-    instrument = request.GET.get('instrument')
-    part = request.GET.get('part')
-    print ("GET type = " + str(type))
-    print ("GET instrument = " + str(instrument))
-    print ("GET part = " + str(part))
-    fr = FileResponse(open("staticfiles/data/" + id + "/" + filename, "rb"))
+    mh = MidiHandler(request.GET, id, filename)
+    midiname = mh.get_or_make_midi_file()
+    fr = FileResponse(open("staticfiles/data/" + id + "/" + midiname, "rb"))
     fr['Access-Control-Allow-Origin'] = '*'
     return fr
 

@@ -484,7 +484,7 @@ class Music21TalkingScore(TalkingScoreBase):
                 for pi in range (self.part_instruments[ins][1], self.part_instruments[ins][1]+self.part_instruments[ins][2]):
                     if self.part_instruments[ins][2]>1:
                         base_filename = os.path.splitext(os.path.basename(self.filepath))[0]
-                        midi_filename = os.path.join(output_path, "%s%s.mid?part=%s" % ( base_filename, postfix_filename, str((pi-self.part_instruments[ins][1])+1) ) )
+                        midi_filename = os.path.join(output_path, "%s.mid?part=%d&start=%d&end=%d" % ( base_filename, pi, range_start, range_end ) )
                         part_midis.append(midi_filename)
 
         base_filename = os.path.splitext(os.path.basename(self.filepath))[0]
