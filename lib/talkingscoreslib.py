@@ -331,9 +331,12 @@ class Music21TalkingScore(TalkingScoreBase):
         global settings
         self.selected_instruments = []
         self.unselected_instruments = []
+        self.binary_selected_instruments = 1 #bitwise representation of all instruments - 0=not included, 1=included
         for ins in self.part_instruments.keys():
+            self.binary_selected_instruments =  self.binary_selected_instruments<<1
             if ins in settings['instruments']:
                 self.selected_instruments.append(ins)
+                self.binary_selected_instruments+=1
             else:
                 self.unselected_instruments.append(ins)
         
@@ -468,6 +471,8 @@ class Music21TalkingScore(TalkingScoreBase):
 
         return chord_pitches_by_octave
 
+     
+
     def generate_midi_filenames(self, prefix, range_start=None, range_end=None, add_instruments=[], output_path="", postfix_filename=""):
         part_midis = []
         if range_start is None and range_end is None:
@@ -478,9 +483,8 @@ class Music21TalkingScore(TalkingScoreBase):
                         midi_filename = os.path.join(output_path, "%s%s.mid?part=%s" % ( base_filename, postfix_filename, str((pi-self.part_instruments[ins][1])+1) ) )
                         part_midis.append(midi_filename)
         else: #specific measures
-            postfix_filename += "_" + str(range_start) + str(range_end)
+            #postfix_filename += "_" + str(range_start) + str(range_end)
             for ins in add_instruments:
-                firstPart = True
                 for pi in range (self.part_instruments[ins][1], self.part_instruments[ins][1]+self.part_instruments[ins][2]):
                     if self.part_instruments[ins][2]>1:
                         base_filename = os.path.splitext(os.path.basename(self.filepath))[0]
@@ -488,7 +492,10 @@ class Music21TalkingScore(TalkingScoreBase):
                         part_midis.append(midi_filename)
 
         base_filename = os.path.splitext(os.path.basename(self.filepath))[0]
-        midi_filename = os.path.join(output_path, "%s.mid?type=%s" % ( base_filename, postfix_filename ) )
+        if (range_start!=None):
+            midi_filename = os.path.join(output_path, ("%s.mid?ins=%d&start=%d&end=%d" % ( base_filename,ins, range_start,range_end )) )
+        else:
+            midi_filename = os.path.join(output_path, ("%s.mid?ins=%d" % ( base_filename,ins,  )) )
         #todo - might need to add in tempos if part 0 is not included
         part_midis = [prefix + os.path.basename(s) for s in part_midis]
         return (prefix+os.path.basename(midi_filename), part_midis)
@@ -716,6 +723,7 @@ class HTMLTalkingScoreFormatter():
                                 'music_segments': self.get_music_segments(output_path,web_path, ),
                                 'instruments' : self.score.part_instruments,
                                 'part_names' : self.score.part_names,
+                                'binary_selected_instruments' : self.score.binary_selected_instruments,
                                 })
 
     def get_basic_information(self):
