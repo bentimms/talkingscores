@@ -730,19 +730,22 @@ class HTMLTalkingScoreFormatter():
         print ("Settings...")
         print (settings)
         
-        full_score_selected = ""
-        if settings['playSelected']==True:
-            full_score_selected = self.score.generate_midi_filename_sel(prefix="/midis/" + os.path.basename(web_path) + "/", output_path=output_path, sel="sel")
-        full_score_unselected = ""
-        if settings['playUnselected']==True:
-            full_score_unselected = self.score.generate_midi_filename_sel(prefix="/midis/" + os.path.basename(web_path) + "/", output_path=output_path, sel="un")
+        start = self.score.score.parts[0].getElementsByClass('Measure')[0].number
+        end = self.score.score.parts[0].getElementsByClass('Measure')[-1].number
+        selected_instruments_midis = {}
+        for index, ins in enumerate(self.score.selected_instruments):
+            midis = self.score.generate_midi_filenames(prefix="/midis/" + os.path.basename(web_path) + "/", range_start=start, range_end=end, output_path=output_path, add_instruments=[ins], postfix_filename="ins"+str(index))
+            selected_instruments_midis[ins] = {"ins":ins,  "midi":midis[0], "midi_parts":midis[1]}
+        
+        midiAll = self.score.generate_midi_filename_sel(prefix="/midis/" + os.path.basename(web_path) + "/", output_path=output_path, range_start=start, range_end=end, sel="all")
+        midiSelected = self.score.generate_midi_filename_sel(prefix="/midis/" + os.path.basename(web_path) + "/", output_path=output_path, range_start=start, range_end=end, sel="sel")
+        midiUnselected = self.score.generate_midi_filename_sel(prefix="/midis/" + os.path.basename(web_path) + "/", output_path=output_path, range_start=start, range_end=end, sel="un")
+        full_score_midis = {'selected_instruments_midis':selected_instruments_midis, 'midi_all':midiAll, 'midi_sel':midiSelected, 'midi_un':midiUnselected }
         
         return template.render({'settings' : settings,
                                 'basic_information': self.get_basic_information(),
                                 'preamble': self.get_preamble(),
-                                'full_score': "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(self.score.generate_midi_for_part_range(output_path=output_path)),
-                                'full_score_selected': "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(full_score_selected),
-                                'full_score_unselected': "/midis/" + os.path.basename(web_path) + "/" + os.path.basename(full_score_unselected),
+                                'full_score_midis': full_score_midis,
                                 'music_segments': self.get_music_segments(output_path,web_path, ),
                                 'instruments' : self.score.part_instruments,
                                 'part_names' : self.score.part_names,
