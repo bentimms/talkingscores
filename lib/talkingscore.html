@@ -34,18 +34,29 @@
 {% for segment in music_segments %}
 
     <h2>Bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}</h2>
-
-    <br/><br/>
+    {% if play_all %}
+        <a href="#" onClick="MIDIjs.play('{{ segment.midi_all + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play All - bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, </a>
+        <br/>
+    {% endif %}
+    {% if play_selected %}
+        <a href="#" onClick="MIDIjs.play('{{ segment.midi_sel + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play Selected - bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, </a>
+        <br/>
+    {% endif %}
+    {% if play_unselected %}
+        <a href="#" onClick="MIDIjs.play('{{ segment.midi_un + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play Unselected - bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, </a>
+        <br/>
+    {% endif %}
+    <br/>
     <b>Instrument MIDIs</b><br/>
     {% for index, ins in segment.selected_instruments_midis.items() %}
-        <a href="#" onClick="MIDIjs.play('{{ ins.midi + "&bsi="}}{{binary_selected_instruments}}'); return false;">Play - {{instruments[ins.ins][0]}} - bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, </a><br/>
+        <a href="#" onClick="MIDIjs.play('{{ ins.midi + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play - {{instruments[ins.ins][0]}} - bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, </a><br/>
         <li style="margin-left:15px; list-style-type:none;">
             {% for midipart in ins.midi_parts %}
-                <a href="#" onClick="MIDIjs.play('{{ midipart + "&bsi="}}{{binary_selected_instruments}}'); return false;">{{part_names[instruments[ins.ins][1] + loop.index-1 ]}}  </a><br/>
+                <a href="#" onClick="MIDIjs.play('{{ midipart + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">{{part_names[instruments[ins.ins][1] + loop.index-1 ]}}  </a><br/>
             {% endfor %}
         </li>
     {% endfor %}
-    <br/><br/>
+    <br/>
 
     {#  Loop over each bar pulling out the beat-based dictionaries #}
     {% for bar, events_for_beats in segment.events_by_bar_and_beat|dictsort %}

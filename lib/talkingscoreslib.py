@@ -14,7 +14,7 @@ us = environment.UserSettings()
 us['warnings'] = 0
 from abc import ABCMeta, abstractmethod
 from jinja2 import Template
-from _datetime import datetime
+from datetime import datetime #start_time = datetime.now()
 logger = logging.getLogger("TSScore")
 
 global settings
@@ -346,6 +346,21 @@ class Music21TalkingScore(TalkingScoreBase):
             settings['playSelected'] = False
         if len(self.selected_instruments)==1: #played by individual part
             settings['playSelected'] = False
+        if len(self.part_instruments)==1:
+            settings['playAll'] = False
+
+        #todo - these maybe shouldn't really be part of score...
+        self.binary_play_all = 1 # placeholder,all,selected,unslected
+        self.binary_play_all = self.binary_play_all << 1
+        if settings['playAll'] == True:
+            self.binary_play_all +=1
+        self.binary_play_all = self.binary_play_all << 1
+        if settings['playSelected'] == True:
+            self.binary_play_all +=1
+        self.binary_play_all = self.binary_play_all << 1
+        if settings['playUnselected'] == True:
+            self.binary_play_all +=1
+        
 
     def get_number_of_parts(self):
         self.get_instruments()
@@ -361,8 +376,9 @@ class Music21TalkingScore(TalkingScoreBase):
 
     def get_events_for_bar_range(self, start_bar, end_bar):
         events_by_bar = {}
-
         # Iterate over the spanners
+        #""" 
+        #todo - this is really slow and inefficient as it looks at spanners for the whole score during each segment!
         for spanner in self.score.flat.spanners.elements:
             spanner_type = type(spanner).__name__
 
@@ -394,7 +410,8 @@ class Music21TalkingScore(TalkingScoreBase):
                         .setdefault(voice, {})\
                         .setdefault(description_order, [])\
                         .append(event)
-
+        #"""
+        
         measures = self.score.measures(start_bar, end_bar)
         for part in measures.parts:
             print("\n\nProcessing part %s, bars %s to %s" % (part.id, start_bar, end_bar))
@@ -471,7 +488,15 @@ class Music21TalkingScore(TalkingScoreBase):
 
         return chord_pitches_by_octave
 
-     
+    #for all / selected / unselected
+    def generate_midi_filename_sel(self, prefix, range_start=None, range_end=None, output_path="", sel=""):
+        base_filename = os.path.splitext(os.path.basename(self.filepath))[0]
+        if (range_start!=None):
+            midi_filename = os.path.join(output_path, ("%s.mid?sel=%s&start=%d&end=%d" % ( base_filename, sel, range_start,range_end )) )
+        else:
+            midi_filename = os.path.join(output_path, ("%s.mid?sel=%s" % ( base_filename, sel,  )) )
+        return (prefix+os.path.basename(midi_filename))
+
 
     def generate_midi_filenames(self, prefix, range_start=None, range_end=None, add_instruments=[], output_path="", postfix_filename=""):
         part_midis = []
@@ -480,10 +505,9 @@ class Music21TalkingScore(TalkingScoreBase):
                 for pi in range (self.part_instruments[ins][1], self.part_instruments[ins][1]+self.part_instruments[ins][2]):
                     if self.part_instruments[ins][2]>1:
                         base_filename = os.path.splitext(os.path.basename(self.filepath))[0]
-                        midi_filename = os.path.join(output_path, "%s%s.mid?part=%s" % ( base_filename, postfix_filename, str((pi-self.part_instruments[ins][1])+1) ) )
+                        midi_filename = os.path.join(output_path, "%s.mid?part=%d" % ( base_filename, pi ) )
                         part_midis.append(midi_filename)
         else: #specific measures
-            #postfix_filename += "_" + str(range_start) + str(range_end)
             for ins in add_instruments:
                 for pi in range (self.part_instruments[ins][1], self.part_instruments[ins][1]+self.part_instruments[ins][2]):
                     if self.part_instruments[ins][2]>1:
@@ -496,7 +520,6 @@ class Music21TalkingScore(TalkingScoreBase):
             midi_filename = os.path.join(output_path, ("%s.mid?ins=%d&start=%d&end=%d" % ( base_filename,ins, range_start,range_end )) )
         else:
             midi_filename = os.path.join(output_path, ("%s.mid?ins=%d" % ( base_filename,ins,  )) )
-        #todo - might need to add in tempos if part 0 is not included
         part_midis = [prefix + os.path.basename(s) for s in part_midis]
         return (prefix+os.path.basename(midi_filename), part_midis)
 
@@ -709,10 +732,10 @@ class HTMLTalkingScoreFormatter():
         
         full_score_selected = ""
         if settings['playSelected']==True:
-            full_score_selected = self.score.generate_midi_filenames(prefix="/midis/" + os.path.basename(web_path) + "/", output_path=output_path, add_instruments=self.score.selected_instruments, postfix_filename="s")[0]
+            full_score_selected = self.score.generate_midi_filename_sel(prefix="/midis/" + os.path.basename(web_path) + "/", output_path=output_path, sel="sel")
         full_score_unselected = ""
         if settings['playUnselected']==True:
-            full_score_unselected = self.score.generate_midi_filenames(prefix="/midis/" + os.path.basename(web_path) + "/", output_path=output_path, add_instruments=self.score.unselected_instruments, postfix_filename="u")[0]
+            full_score_unselected = self.score.generate_midi_filename_sel(prefix="/midis/" + os.path.basename(web_path) + "/", output_path=output_path, sel="un")
         
         return template.render({'settings' : settings,
                                 'basic_information': self.get_basic_information(),
@@ -724,6 +747,10 @@ class HTMLTalkingScoreFormatter():
                                 'instruments' : self.score.part_instruments,
                                 'part_names' : self.score.part_names,
                                 'binary_selected_instruments' : self.score.binary_selected_instruments,
+                                'binary_play_all' : self.score.binary_play_all,
+                                'play_all' : settings['playAll'],
+                                'play_selected' : settings['playSelected'],
+                                'play_unselected' : settings['playUnselected'],
                                 })
 
     def get_basic_information(self):
@@ -759,10 +786,14 @@ class HTMLTalkingScoreFormatter():
             
             selected_instruments_midis = {}
             for index, ins in enumerate(self.score.selected_instruments):
-                midis = self.score.generate_midi_filenamesgenerate_midi_for_instruments(prefix="/midis/" + os.path.basename(web_path) + "/", range_start=0, range_end=0, output_path=output_path, add_instruments=[ins], postfix_filename="ins"+str(index))
+                midis = self.score.generate_midi_filenames(prefix="/midis/" + os.path.basename(web_path) + "/", range_start=0, range_end=0, output_path=output_path, add_instruments=[ins], postfix_filename="ins"+str(index))
                 selected_instruments_midis[ins] = {"ins":ins,  "midi":midis[0], "midi_parts":midis[1]}
 
-            music_segment = {'start_bar':'0 - pickup', 'end_bar':'0 - pickup', 'events_by_bar_and_beat': events_by_bar_and_beat, 'selected_instruments_midis':selected_instruments_midis }
+            midiAll = self.score.generate_midi_filename_sel(prefix="/midis/" + os.path.basename(web_path) + "/", output_path=output_path, range_start=0, range_end=0, sel="all")
+            midiSelected = self.score.generate_midi_filename_sel(prefix="/midis/" + os.path.basename(web_path) + "/", output_path=output_path, range_start=0, range_end=0, sel="sel")
+            midiUnselected = self.score.generate_midi_filename_sel(prefix="/midis/" + os.path.basename(web_path) + "/", output_path=output_path, range_start=0, range_end=0, sel="un")
+        
+            music_segment = {'start_bar':'0 - pickup', 'end_bar':'0 - pickup', 'events_by_bar_and_beat': events_by_bar_and_beat, 'selected_instruments_midis':selected_instruments_midis, 'midi_all':midiAll, 'midi_sel':midiSelected, 'midi_un':midiUnselected }
             music_segments.append(music_segment)
             number_of_bars-=1
  
@@ -784,7 +815,11 @@ class HTMLTalkingScoreFormatter():
                 midis = self.score.generate_midi_filenames(prefix="/midis/" + os.path.basename(web_path) + "/", range_start=bar_index, range_end=end_bar_index, output_path=output_path, add_instruments=[ins], postfix_filename="ins"+str(index))
                 selected_instruments_midis[ins] = {"ins":ins,  "midi":midis[0], "midi_parts":midis[1]}
             
-            music_segment = {'start_bar':bar_index, 'end_bar': end_bar_index, 'events_by_bar_and_beat': events_by_bar_and_beat, 'selected_instruments_midis':selected_instruments_midis }
+            midiAll = self.score.generate_midi_filename_sel(prefix="/midis/" + os.path.basename(web_path) + "/", output_path=output_path, range_start=bar_index, range_end=end_bar_index, sel="all")
+            midiSelected = self.score.generate_midi_filename_sel(prefix="/midis/" + os.path.basename(web_path) + "/", output_path=output_path, range_start=bar_index, range_end=end_bar_index, sel="sel")
+            midiUnselected = self.score.generate_midi_filename_sel(prefix="/midis/" + os.path.basename(web_path) + "/", output_path=output_path, range_start=bar_index, range_end=end_bar_index, sel="un")
+        
+            music_segment = {'start_bar':bar_index, 'end_bar': end_bar_index, 'events_by_bar_and_beat': events_by_bar_and_beat, 'selected_instruments_midis':selected_instruments_midis, 'midi_all':midiAll, 'midi_sel':midiSelected, 'midi_un':midiUnselected }
             music_segments.append(music_segment)
 
         logger.info("End of get_music_segments")

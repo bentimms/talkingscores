@@ -52,6 +52,7 @@ class MidiHandler:
                     self.selected_instruement_parts[instrument_index] = [part_index]
             else:
                 self.all_unselected_parts.append(part_index)
+                self.selected_instruement_parts[instrument_index] = []
 
             prev_instrument=part.partId
 
@@ -61,8 +62,29 @@ class MidiHandler:
         print(self.all_unselected_parts)
         print("selected_instruement_parts = ")
         print(self.selected_instruement_parts)
+
+        #play together - all / selected / unselected instruments
+        bpi = int(self.queryString.get("bpi"))
+        self.play_together_unselected = bpi&1
+        bpi=bpi>>1
+        self.play_together_selected = bpi&1
+        bpi=bpi>>1
+        self.play_together_all = bpi&1
+        bpi=bpi>>1
+        
+        
+        while (bsi>1):
+            print ("bsi = " + str(bsi))
+            if (bsi&1==True):
+                self.selected_instruments.append(True)
+            else:
+                self.selected_instruments.append(False)
+            bsi=bsi>>1
+        
     
     def make_midi_files(self):
+        #todo - it is a bit slow for big musicxml files eg chaconne!
+        #todo maybe get the segment of all parts then get parts from that.  
         xml_file_path = os.path.join(*(MEDIA_ROOT, self.folder, self.filename)) #todo - might not be secure 
         self.score = converter.parse(xml_file_path+".musicxml") #todo - might be .xml instead of .musicxml
         self.get_selected_instruments()
@@ -76,20 +98,105 @@ class MidiHandler:
         else:
             start = int(self.queryString.get("start"))
             end = int(self.queryString.get("end"))
-            
-        if (self.queryString.get("part")!=None):
-            s.insert(self.score.parts[int(self.queryString.get("part"))].measures(start,end))
-    
 
-        midi_filepath = os.path.join(STATIC_ROOT, "data", self.folder, "%s" % ( self.midiname ) )
-        s.write('midi', midi_filepath)
+        offset = self.score.parts[0].measure(start).offset
+        
+        #in very rough tests (same bars) using the segment then getting parts from that (instead of original stream) saves 1 or 2 seconds with 2 parts 261 bars, 2,060kb.  
+        #maybe a deep copy would be better?
+        scoreSegment = stream.Score(id='tempSegment')
+        for p in self.score.parts:
+            #fix with pickup bar
+            if start==0 and end==0:
+                end=1
+            for m in p.measures(start, end).getElementsByClass('Measure'):
+                #todo - test with repeats
+                m.removeByClass('Repeat') 
+            scoreSegment.insert(p.measures(start,end, ))
+            if start==0 and end==1:
+                end=0
+        #play all parts together
+        if self.play_together_all:
+            s = stream.Score(id='temp')
+            for p in scoreSegment.parts:
+                s.insert(p.measures(start, end ))
+            self.insert_tempos(s, offset)
+            s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="all")) 
 
+        #play all selected parts together
+        if self.play_together_selected:
+            s = stream.Score(id='temp')
+            for part_index, p in enumerate(scoreSegment.parts):
+                if part_index in self.all_selected_parts:
+                    s.insert(p.measures(start, end ))
+            self.insert_tempos(s, offset)
+            s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="sel")) 
+
+        #play all unselected parts together
+        if self.play_together_unselected:
+            s = stream.Score(id='temp')
+            for part_index, p in enumerate(scoreSegment.parts):
+                if part_index in self.all_unselected_parts:
+                    s.insert(p.measures(start, end))
+            self.insert_tempos(s, offset)
+            s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="un")) 
+
+        #each individual part - if selected
+        for part_index, p in enumerate(scoreSegment.parts):
+            if part_index in self.all_selected_parts:
+                s = stream.Score(id='temp')
+                s.insert(p.measures(start, end))
+                self.insert_tempos(s, offset)
+                s.write('midi', self.make_midi_path_from_options(start=start, end=end, part=part_index)) 
+
+        #each instrument (with 1 or more parts) - if selected
+        for index, parts_list in enumerate(self.selected_instruement_parts.values()):
+            if (len(parts_list)>0):
+                s = stream.Score(id='temp')
+                for pi in parts_list:
+                    s.insert(scoreSegment.parts[pi].measures(start, end))
+                self.insert_tempos(s, offset)
+                s.write('midi', self.make_midi_path_from_options(start=start, end=end, ins=index+1)) 
+
+        
+    #music21 might have a better way of doing this.  
+    #s.insert(self.score.parts[int(self.queryString.get("part"))].measures(start,end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature', 'TempoIndication'))) - collect doesn't seem to do anything!
+    #If part 0 is included then tempos are already present.
+    def insert_tempos(self, stream, offset_start):       
+        for mmb in self.score.metronomeMarkBoundaries():
+            if (mmb[0]>=offset_start+stream.duration.quarterLength): # ignore tempos that start after stream ends
+                return           
+            if (mmb[1]>offset_start): # if mmb ends during the segment
+                if (mmb[0])<=offset_start: # starts before segment so insert it at the start of the stream
+                    stream.insert(0, tempo.MetronomeMark(number=mmb[2].number))
+                else: # starts during segment so insert it part way through the stream
+                    stream.insert(mmb[0]-offset_start, tempo.MetronomeMark(number=mmb[2].number))
+
+    def make_midi_path_from_options(self, sel=None, part=None, ins=None, start=None, end=None, click=None, tempo=None):
+        self.midiname = self.filename
+        if (sel!=None):
+            self.midiname+="sel-"+str(sel)
+        if (part!=None):
+            self.midiname+="p"+str(part)
+        if (ins!=None):
+            self.midiname+="i"+str(ins)
+        if (start!=None):
+            self.midiname+="s"+str(start)
+        if (end!=None):
+            self.midiname+="e"+str(end)
+        if (click!=None):
+            self.midiname+="c"+str(click)
+        if (tempo!=None):
+            self.midiname+="t"+str(tempo)
+        
+        self.midiname+=".mid"
+        print("midifilename = " + self.midiname)
+        return os.path.join(STATIC_ROOT, "data", self.folder, "%s" % ( self.midiname ) )
+        
 
     def get_or_make_midi_file(self):
         self.midiname = self.filename
-        if (self.queryString.get("selected")!=None):
-            #todo - just selected parts will be tricky!
-            self.midiname+="selected-"+self.queryString.get("selected")
+        if (self.queryString.get("sel")!=None):
+            self.midiname+="sel-"+self.queryString.get("sel") #sel-sel, sel-all, sel-un
         if (self.queryString.get("part")!=None):
             self.midiname+="p"+self.queryString.get("part")
         if (self.queryString.get("ins")!=None):
@@ -104,9 +211,10 @@ class MidiHandler:
             self.midiname+="t"+self.queryString.get("tempo")
         
         self.midiname+=".mid"
-        
+        toReturn = self.midiname
         midi_filepath = os.path.join(STATIC_ROOT, "data", self.folder, "%s" % ( self.midiname ) )
         if not os.path.exists(midi_filepath):
+            print("midi file not found - " + self.midiname + " - making it...")
             self.make_midi_files()
         
-        return self.midiname
+        return toReturn
