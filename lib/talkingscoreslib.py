@@ -375,6 +375,7 @@ class Music21TalkingScore(TalkingScoreBase):
         return bars_for_parts
 
     def get_events_for_bar_range(self, start_bar, end_bar, part_index):
+        #todo - I have broken multiple voices!
         events_by_bar = {}
         # Iterate over the spanners
         """ 

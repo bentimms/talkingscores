@@ -114,62 +114,79 @@ class MidiHandler:
             scoreSegment.insert(p.measures(start,end, ))
             if start==0 and end==1:
                 end=0
-        #play all parts together
-        if self.play_together_all:
-            s = stream.Score(id='temp')
-            for p in scoreSegment.parts:
-                s.insert(p.measures(start, end ))
-            self.insert_tempos(s, offset)
-            s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="all")) 
+        
+        tempos = [50, 100, 150]
+        for tempo in tempos: 
+            #play all parts together
+            if self.play_together_all:
+                s = stream.Score(id='temp')
+                for p in scoreSegment.parts:
+                    s.insert(p.measures(start, end ))
+                self.insert_tempos(s, offset, tempo/100)
+                s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="all", tempo=tempo)) 
 
-        #play all selected parts together
-        if self.play_together_selected:
-            s = stream.Score(id='temp')
+            #play all selected parts together
+            if self.play_together_selected:
+                s = stream.Score(id='temp')
+                for part_index, p in enumerate(scoreSegment.parts):
+                    if part_index in self.all_selected_parts:
+                        s.insert(p.measures(start, end ))
+                self.insert_tempos(s, offset, tempo/100)
+                s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="sel", tempo=tempo)) 
+
+            #play all unselected parts together
+            if self.play_together_unselected:
+                s = stream.Score(id='temp')
+                for part_index, p in enumerate(scoreSegment.parts):
+                    if part_index in self.all_unselected_parts:
+                        s.insert(p.measures(start, end))
+                self.insert_tempos(s, offset, tempo/100)
+                s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="un", tempo=tempo)) 
+
+            #each individual part - if selected
             for part_index, p in enumerate(scoreSegment.parts):
                 if part_index in self.all_selected_parts:
-                    s.insert(p.measures(start, end ))
-            self.insert_tempos(s, offset)
-            s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="sel")) 
-
-        #play all unselected parts together
-        if self.play_together_unselected:
-            s = stream.Score(id='temp')
-            for part_index, p in enumerate(scoreSegment.parts):
-                if part_index in self.all_unselected_parts:
+                    s = stream.Score(id='temp')
                     s.insert(p.measures(start, end))
-            self.insert_tempos(s, offset)
-            s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="un")) 
+                    self.insert_tempos(s, offset, tempo/100)
+                    self.insert_click_track(s)
+                    s.write('midi', self.make_midi_path_from_options(start=start, end=end, part=part_index, tempo=tempo)) 
 
-        #each individual part - if selected
-        for part_index, p in enumerate(scoreSegment.parts):
-            if part_index in self.all_selected_parts:
-                s = stream.Score(id='temp')
-                s.insert(p.measures(start, end))
-                self.insert_tempos(s, offset)
-                s.write('midi', self.make_midi_path_from_options(start=start, end=end, part=part_index)) 
+            #each instrument (with 1 or more parts) - if selected
+            for index, parts_list in enumerate(self.selected_instruement_parts.values()):
+                if (len(parts_list)>0):
+                    s = stream.Score(id='temp')
+                    for pi in parts_list:
+                        s.insert(scoreSegment.parts[pi].measures(start, end))
+                    self.insert_tempos(s, offset, tempo/100)
+                    self.insert_click_track(s)
+                    s.write('midi', self.make_midi_path_from_options(start=start, end=end, ins=index+1, tempo=tempo)) 
 
-        #each instrument (with 1 or more parts) - if selected
-        for index, parts_list in enumerate(self.selected_instruement_parts.values()):
-            if (len(parts_list)>0):
-                s = stream.Score(id='temp')
-                for pi in parts_list:
-                    s.insert(scoreSegment.parts[pi].measures(start, end))
-                self.insert_tempos(s, offset)
-                s.write('midi', self.make_midi_path_from_options(start=start, end=end, ins=index+1)) 
-
+        
+    def insert_click_track(self, s):
+        #todo - use eg instrument.HiHatCymbal() etc after updating music21
+        f = note.Note("F5")
+        stream2 = stream.Stream()
+        ins = instrument.Woodblock() # workds d#1 and d#5 ok ish.  1 is too quiet
+        stream2.insert(0, ins)
+        n2 = note.Note('D#1')  # octave values can be included in creation arguments
+        n3 = note.Note('D#5')  # octave values can be included in creation arguments
+        stream2.append(n2)
+        stream2.repeatAppend(n3, 3)
+        s.insert(stream2)
         
     #music21 might have a better way of doing this.  
     #s.insert(self.score.parts[int(self.queryString.get("part"))].measures(start,end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature', 'TempoIndication'))) - collect doesn't seem to do anything!
     #If part 0 is included then tempos are already present.
-    def insert_tempos(self, stream, offset_start):       
+    def insert_tempos(self, stream, offset_start, scale):       
         for mmb in self.score.metronomeMarkBoundaries():
             if (mmb[0]>=offset_start+stream.duration.quarterLength): # ignore tempos that start after stream ends
                 return           
             if (mmb[1]>offset_start): # if mmb ends during the segment
                 if (mmb[0])<=offset_start: # starts before segment so insert it at the start of the stream
-                    stream.insert(0, tempo.MetronomeMark(number=mmb[2].number))
+                    stream.insert(0, tempo.MetronomeMark( number=mmb[2].number*scale ))
                 else: # starts during segment so insert it part way through the stream
-                    stream.insert(mmb[0]-offset_start, tempo.MetronomeMark(number=mmb[2].number))
+                    stream.insert(mmb[0]-offset_start, tempo.MetronomeMark(number=mmb[2].number*scale))
 
     def make_midi_path_from_options(self, sel=None, part=None, ins=None, start=None, end=None, click=None, tempo=None):
         self.midiname = self.filename
@@ -205,10 +222,10 @@ class MidiHandler:
             self.midiname+="s"+self.queryString.get("start")
         if (self.queryString.get("end")!=None):
             self.midiname+="e"+self.queryString.get("end")
-        if (self.queryString.get("click")=="1"):
-            self.midiname+="c"
-        if (self.queryString.get("tempo")!=None):
-            self.midiname+="t"+self.queryString.get("tempo")
+        if (self.queryString.get("c")=="1"):
+            self.midiname+="c"+self.queryString.get("c")
+        if (self.queryString.get("t")!=None):
+            self.midiname+="t"+self.queryString.get("t")
         
         self.midiname+=".mid"
         toReturn = self.midiname
