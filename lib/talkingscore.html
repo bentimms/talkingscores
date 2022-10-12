@@ -33,9 +33,7 @@ Tempo:
 Click:
 <select class="ddlClick" name="click" id="ddlClick">
     <option value="n">None</option>
-    <option value="ba">Bars</option>
-    <option value="be">Beats</option>
-    <option value="qe">Eighth notes / Quavers</option>
+    <option value="be">Bars / Beats</option>
 </select>
 <br/>
 {% if play_all %}
@@ -78,9 +76,7 @@ Click:
     Click:
     <select class="ddlClick" name="click">
         <option value="n">None</option>
-        <option value="ba">Bars</option>
-        <option value="be">Beats</option>
-        <option value="qe">Eighth notes / Quavers</option>
+        <option value="be">Bars / Beats</option>
     </select>
     <br/>
     {% if play_all %}
@@ -176,18 +172,37 @@ Click:
         $(".ddlTempo").on('change', function (event) {
             event.stopPropagation();
             event.stopImmediatePropagation();
-            let newTempo = this.value
+            let tempo = this.value
             let click = $("#ddlClick").val()
             $('.lnkPlay').each(function(i, obj) {
                 let href=$(this).attr('onClick');
-                console.log(href)
                 let posTempo = href.indexOf('&t=')
                 href = href.substr(0,posTempo)
-                $(this).attr('onClick', href +"&t="+ newTempo + "&c=" + click + "&bsi={{binary_selected_instruments}}&bpi={{binary_play_all}}'); return false;") 
+                $(this).attr('onClick', href +"&t="+ tempo + "&c=" + click + "&bsi={{binary_selected_instruments}}&bpi={{binary_play_all}}'); return false;") 
             });
 
             $('.ddlTempo').each(function(ddlIndex, ddlObj) {
-                ddlObj.value=newTempo
+                ddlObj.value=tempo
+            });
+
+        });
+    });
+
+    $(document).ready(function() {
+        $(".ddlClick").on('change', function (event) {
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            let click = this.value
+            let tempo = $("#ddlTempo").val()
+            $('.lnkPlay').each(function(i, obj) {
+                let href=$(this).attr('onClick');
+                let posTempo = href.indexOf('&t=')
+                href = href.substr(0,posTempo)
+                $(this).attr('onClick', href +"&t="+ tempo + "&c=" + click + "&bsi={{binary_selected_instruments}}&bpi={{binary_play_all}}'); return false;") 
+            });
+
+            $('.ddlClick').each(function(ddlIndex, ddlObj) {
+                ddlObj.value=click
             });
 
         });

@@ -115,65 +115,89 @@ class MidiHandler:
             if start==0 and end==1:
                 end=0
         
-        tempos = [50, 100, 150]
-        for tempo in tempos: 
-            #play all parts together
-            if self.play_together_all:
-                s = stream.Score(id='temp')
-                for p in scoreSegment.parts:
-                    s.insert(p.measures(start, end ))
-                self.insert_tempos(s, offset, tempo/100)
-                s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="all", tempo=tempo)) 
+        for click in ['n', 'be']:
+            for tempo in [50, 100, 150]: 
+                #play all parts together
+                if self.play_together_all:
+                    s = stream.Score(id='temp')
+                    s.measures(0,2)
+                    for p in scoreSegment.parts:
+                        s.insert(p.measures(start, end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature') ))
+                    self.insert_tempos(s, offset, tempo/100)
+                    self.insert_click_track(s, click)
+                    s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="all", tempo=tempo, click=click)) 
 
-            #play all selected parts together
-            if self.play_together_selected:
-                s = stream.Score(id='temp')
+                #play all selected parts together
+                if self.play_together_selected:
+                    s = stream.Score(id='temp')
+                    for part_index, p in enumerate(scoreSegment.parts):
+                        if part_index in self.all_selected_parts:
+                            s.insert(p.measures(start, end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature') ))
+                    self.insert_tempos(s, offset, tempo/100)
+                    self.insert_click_track(s, click)
+                    s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="sel", tempo=tempo, click=click)) 
+
+                #play all unselected parts together
+                if self.play_together_unselected:
+                    s = stream.Score(id='temp')
+                    for part_index, p in enumerate(scoreSegment.parts):
+                        if part_index in self.all_unselected_parts:
+                            s.insert(p.measures(start, end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature')))
+                    self.insert_tempos(s, offset, tempo/100)
+                    self.insert_click_track(s, click)
+                    s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="un", tempo=tempo, click=click)) 
+
+                #each individual part - if selected
                 for part_index, p in enumerate(scoreSegment.parts):
                     if part_index in self.all_selected_parts:
-                        s.insert(p.measures(start, end ))
-                self.insert_tempos(s, offset, tempo/100)
-                s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="sel", tempo=tempo)) 
+                        s = stream.Score(id='temp')
+                        s.insert(p.measures(start, end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature')))
+                        self.insert_tempos(s, offset, tempo/100)
+                        self.insert_click_track(s, click)
+                        s.write('midi', self.make_midi_path_from_options(start=start, end=end, part=part_index, tempo=tempo, click=click)) 
 
-            #play all unselected parts together
-            if self.play_together_unselected:
-                s = stream.Score(id='temp')
-                for part_index, p in enumerate(scoreSegment.parts):
-                    if part_index in self.all_unselected_parts:
-                        s.insert(p.measures(start, end))
-                self.insert_tempos(s, offset, tempo/100)
-                s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="un", tempo=tempo)) 
-
-            #each individual part - if selected
-            for part_index, p in enumerate(scoreSegment.parts):
-                if part_index in self.all_selected_parts:
-                    s = stream.Score(id='temp')
-                    s.insert(p.measures(start, end))
-                    self.insert_tempos(s, offset, tempo/100)
-                    self.insert_click_track(s)
-                    s.write('midi', self.make_midi_path_from_options(start=start, end=end, part=part_index, tempo=tempo)) 
-
-            #each instrument (with 1 or more parts) - if selected
-            for index, parts_list in enumerate(self.selected_instruement_parts.values()):
-                if (len(parts_list)>0):
-                    s = stream.Score(id='temp')
-                    for pi in parts_list:
-                        s.insert(scoreSegment.parts[pi].measures(start, end))
-                    self.insert_tempos(s, offset, tempo/100)
-                    self.insert_click_track(s)
-                    s.write('midi', self.make_midi_path_from_options(start=start, end=end, ins=index+1, tempo=tempo)) 
+                #each instrument (with 1 or more parts) - if selected
+                for index, parts_list in enumerate(self.selected_instruement_parts.values()):
+                    if (len(parts_list)>0):
+                        s = stream.Score(id='temp')
+                        for pi in parts_list:
+                            s.insert(scoreSegment.parts[pi].measures(start, end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature')))
+                        self.insert_tempos(s, offset, tempo/100)
+                        self.insert_click_track(s, click)
+                        s.write('midi', self.make_midi_path_from_options(start=start, end=end, ins=index+1, tempo=tempo, click=click)) 
 
         
-    def insert_click_track(self, s):
+    def insert_click_track(self, s, click):
+        if click == 'n':
+            return
+        
         #todo - use eg instrument.HiHatCymbal() etc after updating music21
-        f = note.Note("F5")
-        stream2 = stream.Stream()
+        clicktrack = stream.Stream()
         ins = instrument.Woodblock() # workds d#1 and d#5 ok ish.  1 is too quiet
-        stream2.insert(0, ins)
-        n2 = note.Note('D#1')  # octave values can be included in creation arguments
-        n3 = note.Note('D#5')  # octave values can be included in creation arguments
-        stream2.append(n2)
-        stream2.repeatAppend(n3, 3)
-        s.insert(stream2)
+        clicktrack.insert(0, ins)
+        
+        for m in s.getElementsByClass(stream.Part)[0].getElementsByClass(stream.Measure):
+            if len(m.getElementsByClass(meter.TimeSignature))>0:
+                ts = m.getElementsByClass(meter.TimeSignature)[0]
+            else:
+                ts:meter.TimeSignature = m.previous('TimeSignature')
+            
+            clickmeasure = stream.Measure()
+            clickmeasure.mergeAttributes(m)
+            clickmeasure.duration=m.duration #need to set duration or add rests
+            clickNote = note.Note('D#1')
+            clickNote.duration = ts.getBeatDuration(0) # specify beat number for complex time signatures...
+            clickmeasure.append(clickNote)
+            beatpos = ts.getBeatDuration(0).quarterLength
+            
+            for b in range(0, ts.beatCount-1):
+                clickNote = note.Note('D#5')
+                clickNote.duration = ts.getBeatDuration(beatpos)
+                beatpos+=clickNote.duration.quarterLength
+                clickmeasure.append(clickNote)
+            clicktrack.append(clickmeasure)
+         
+        s.insert(clicktrack)
         
     #music21 might have a better way of doing this.  
     #s.insert(self.score.parts[int(self.queryString.get("part"))].measures(start,end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature', 'TempoIndication'))) - collect doesn't seem to do anything!
@@ -222,7 +246,7 @@ class MidiHandler:
             self.midiname+="s"+self.queryString.get("start")
         if (self.queryString.get("end")!=None):
             self.midiname+="e"+self.queryString.get("end")
-        if (self.queryString.get("c")=="1"):
+        if (self.queryString.get("c")!=None):
             self.midiname+="c"+self.queryString.get("c")
         if (self.queryString.get("t")!=None):
             self.midiname+="t"+self.queryString.get("t")
