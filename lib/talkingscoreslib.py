@@ -375,7 +375,6 @@ class Music21TalkingScore(TalkingScoreBase):
         return bars_for_parts
 
     def get_events_for_bar_range(self, start_bar, end_bar, part_index):
-        #todo - I have broken multiple voices!
         events_by_bar = {}
         # Iterate over the spanners
         """ 
@@ -426,7 +425,7 @@ class Music21TalkingScore(TalkingScoreBase):
 
         return events_by_bar
 
-    def update_events_for_measure(self, measure, events, voice=1):
+    def update_events_for_measure(self, measure, events, voice:int=1):
         for element in measure.elements:
             element_type = type(element).__name__
             event = None
@@ -455,7 +454,7 @@ class Music21TalkingScore(TalkingScoreBase):
                 
 
             elif element_type == 'Voice':
-                self.update_events_for_measure(element, events, element.id)
+                self.update_events_for_measure(element, events, int(element.id))
 
             if event is None:
                 continue
