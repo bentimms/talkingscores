@@ -107,7 +107,7 @@ def score(request, id, filename):
 def midi(request, id, filename):
     mh = MidiHandler(request.GET, id, filename)
     midiname = mh.get_or_make_midi_file()
-    fr = FileResponse(open("staticfiles/data/" + id + "/" + midiname, "rb"))
+    fr = FileResponse(open(BASE_DIR+"/staticfiles/data/" + id + "/" + midiname, "rb"))
     fr['Access-Control-Allow-Origin'] = '*'
     return fr
 

@@ -231,7 +231,7 @@ class MidiHandler:
         
         self.midiname+=".mid"
         print("midifilename = " + self.midiname)
-        return os.path.join(STATIC_ROOT, "data", self.folder, "%s" % ( self.midiname ) )
+        return os.path.join(BASE_DIR, STATIC_ROOT, "data", self.folder, "%s" % ( self.midiname ) )
         
 
     def get_or_make_midi_file(self):
@@ -253,7 +253,7 @@ class MidiHandler:
         
         self.midiname+=".mid"
         toReturn = self.midiname
-        midi_filepath = os.path.join(STATIC_ROOT, "data", self.folder, "%s" % ( self.midiname ) )
+        midi_filepath = os.path.join(BASE_DIR, STATIC_ROOT, "data", self.folder, "%s" % ( self.midiname ) )
         if not os.path.exists(midi_filepath):
             print("midi file not found - " + self.midiname + " - making it...")
             self.make_midi_files()
