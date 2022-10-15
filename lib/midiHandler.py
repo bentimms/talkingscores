@@ -95,6 +95,7 @@ class MidiHandler:
             #todo - test for pickup bar
             start = self.score.parts[0].getElementsByClass('Measure')[0].number
             end = self.score.parts[0].getElementsByClass('Measure')[-1].number
+
         else:
             start = int(self.queryString.get("start"))
             end = int(self.queryString.get("end"))
@@ -103,7 +104,7 @@ class MidiHandler:
         
         #in very rough tests (same bars) using the segment then getting parts from that (instead of original stream) saves 1 or 2 seconds with 2 parts 261 bars, 2,060kb.  
         #maybe a deep copy would be better?
-        scoreSegment = stream.Score(id='tempSegment')
+        self.scoreSegment = stream.Score(id='tempSegment')
         for p in self.score.parts:
             #fix with pickup bar
             if start==0 and end==0:
@@ -111,17 +112,20 @@ class MidiHandler:
             for m in p.measures(start, end).getElementsByClass('Measure'):
                 #todo - test with repeats
                 m.removeByClass('Repeat') 
-            scoreSegment.insert(p.measures(start,end, ))
+            self.scoreSegment.insert(p.measures(start,end, ))
             if start==0 and end==1:
                 end=0
         
+        #for click in ['be']:
         for click in ['n', 'be']:
+            #for tempo in [100, 150]: 
             for tempo in [50, 100, 150]: 
+                print ("doing tempo" + str(tempo))
                 #play all parts together
                 if self.play_together_all:
+                    print("making play all")
                     s = stream.Score(id='temp')
-                    s.measures(0,2)
-                    for p in scoreSegment.parts:
+                    for p in self.scoreSegment.parts:
                         s.insert(p.measures(start, end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature') ))
                     self.insert_tempos(s, offset, tempo/100)
                     self.insert_click_track(s, click)
@@ -129,8 +133,9 @@ class MidiHandler:
 
                 #play all selected parts together
                 if self.play_together_selected:
+                    print("making play selected")
                     s = stream.Score(id='temp')
-                    for part_index, p in enumerate(scoreSegment.parts):
+                    for part_index, p in enumerate(self.scoreSegment.parts):
                         if part_index in self.all_selected_parts:
                             s.insert(p.measures(start, end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature') ))
                     self.insert_tempos(s, offset, tempo/100)
@@ -139,8 +144,9 @@ class MidiHandler:
 
                 #play all unselected parts together
                 if self.play_together_unselected:
+                    print("making play unselected")
                     s = stream.Score(id='temp')
-                    for part_index, p in enumerate(scoreSegment.parts):
+                    for part_index, p in enumerate(self.scoreSegment.parts):
                         if part_index in self.all_unselected_parts:
                             s.insert(p.measures(start, end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature')))
                     self.insert_tempos(s, offset, tempo/100)
@@ -148,20 +154,22 @@ class MidiHandler:
                     s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="un", tempo=tempo, click=click)) 
 
                 #each individual part - if selected
-                for part_index, p in enumerate(scoreSegment.parts):
+                for part_index, p in enumerate(self.scoreSegment.parts):
                     if part_index in self.all_selected_parts:
+                        print("making individual part")
                         s = stream.Score(id='temp')
                         s.insert(p.measures(start, end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature')))
                         self.insert_tempos(s, offset, tempo/100)
                         self.insert_click_track(s, click)
                         s.write('midi', self.make_midi_path_from_options(start=start, end=end, part=part_index, tempo=tempo, click=click)) 
-
+                
                 #each instrument (with 1 or more parts) - if selected
                 for index, parts_list in enumerate(self.selected_instruement_parts.values()):
                     if (len(parts_list)>0):
+                        print("making instrument")
                         s = stream.Score(id='temp')
                         for pi in parts_list:
-                            s.insert(scoreSegment.parts[pi].measures(start, end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature')))
+                            s.insert(self.scoreSegment.parts[pi].measures(start, end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature')))
                         self.insert_tempos(s, offset, tempo/100)
                         self.insert_click_track(s, click)
                         s.write('midi', self.make_midi_path_from_options(start=start, end=end, ins=index+1, tempo=tempo, click=click)) 
@@ -175,27 +183,75 @@ class MidiHandler:
         clicktrack = stream.Stream()
         ins = instrument.Woodblock() # workds d#1 and d#5 ok ish.  1 is too quiet
         clicktrack.insert(0, ins)
-        
+        ts:meter.TimeSignature = None
+        shift_measure_offset = 0
         for m in s.getElementsByClass(stream.Part)[0].getElementsByClass(stream.Measure):
+            #s.setElementOffset(m, m.offset+shift_measure_offset)
+            #m.setOffsetBySite(s, m.offset+shift_measure_offset)
             if len(m.getElementsByClass(meter.TimeSignature))>0:
                 ts = m.getElementsByClass(meter.TimeSignature)[0]
+                print("click track got time signature from measure... " + str(ts) )
             else:
-                ts:meter.TimeSignature = m.previous('TimeSignature')
-            
+                if (ts==None):
+                    ts:meter.TimeSignature = m.previous('TimeSignature')
+                    print("click track got time signature from previous... " + str(ts))
+                    print(str(m))
+            print ("parts count = " + str(len(s.getElementsByClass(stream.Part))))
             clickmeasure = stream.Measure()
             clickmeasure.mergeAttributes(m)
-            clickmeasure.duration=m.duration #need to set duration or add rests
+            clickmeasure.duration= ts.barDuration #need to set duration or add rests
             clickNote = note.Note('D#1')
             clickNote.duration = ts.getBeatDuration(0) # specify beat number for complex time signatures...
             clickmeasure.append(clickNote)
             beatpos = ts.getBeatDuration(0).quarterLength
-            
+            if (m.duration.quarterLength < ts.barDuration.quarterLength):
+                print("add click track - pickup bar!")
+                print("m.duration = " + str(m.duration) + " and ts duration = " + str(ts.barDuration))
+                rest_duration = ts.barDuration.quarterLength - m.duration.quarterLength
+                r = note.Rest()
+                r.duration.quarterLength = rest_duration
+                print("rest_duration = " + str(rest_duration))
+                #m.duration.quarterLength = ts.barDuration.quarterLength
+                #m.insertAndShift(0,r)
+                for p in self.scoreSegment.parts: #change the bar start offset for all future streams.  Add a rest in all streams (including this one)
+                    r = note.Rest()
+                    r.duration.quarterLength = rest_duration
+                    #p.getElementsByClass(stream.Measure)[0].duration.quarterLength = ts.barDuration.quarterLength
+                    p.getElementsByClass(stream.Measure)[0].insertAndShift(0,r)
+                    for ms in p.getElementsByClass(stream.Measure)[1:]:
+                        ms.offset+=rest_duration
+                    
+                    print("now added rest to parts - duration = " + str(rest_duration) + " and measure 0 duration = " + str(p.getElementsByClass(stream.Measure)[0].duration.quarterLength))
+                for p in s.parts: # change the bar start offsets for this stream
+                    for ms in p.getElementsByClass(stream.Measure)[1:]:
+                        ms.offset+=rest_duration
+                    
+                
+                
+                shift_measure_offset = rest_duration
+                print("shift measure offset = " + str(shift_measure_offset))
+                #update tempo offsets
+                print("getting all the tempos...")
+                for t in s.getElementsByClass(tempo.MetronomeMark):
+                    print(str(t))
+                    #print("offset = " + str(t.offset))
+                    if (t.offset>0):
+                        t.offset+=shift_measure_offset
+                        #print("active site = " + str(t.activeSite))
+                    #print("now offset = " + str(t.offset))
+            else:
+                print("NOT a pickup bar!")    
+                print("m.number = " + str(m.number) + " and m.duration = " + str(m.duration) + " and m.offset = " + str(m.offset))
+                  
             for b in range(0, ts.beatCount-1):
                 clickNote = note.Note('D#5')
                 clickNote.duration = ts.getBeatDuration(beatpos)
                 beatpos+=clickNote.duration.quarterLength
                 clickmeasure.append(clickNote)
+                #print("added note to clicktrack " + str(clickNote))
+                
             clicktrack.append(clickmeasure)
+            #print("added measure to clicktrack - duration = " + str(clickmeasure.duration.quarterLength))
          
         s.insert(clicktrack)
         
