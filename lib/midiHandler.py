@@ -175,7 +175,9 @@ class MidiHandler:
         print("adding click track")
         #todo - use eg instrument.HiHatCymbal() etc after updating music21
         clicktrack = stream.Stream()
-        ins = instrument.Woodblock() # workds d#1 and d#5 ok ish.  1 is too quiet
+        #ins = instrument.Woodblock() # workds d#1 and d#5 ok ish.  beat 1 is too quiet
+        ins = instrument.Percussion()
+        ins.midiChannel=9 
         clicktrack.insert(0, ins)
         ts:meter.TimeSignature = None
         shift_measure_offset = 0
@@ -188,7 +190,7 @@ class MidiHandler:
             clickmeasure = stream.Measure()
             clickmeasure.mergeAttributes(m)
             clickmeasure.duration= ts.barDuration 
-            clickNote = note.Note('D#1')
+            clickNote = note.Note('D2')
             clickNote.duration = ts.getBeatDuration(0) # specify beat number for complex time signatures...
             clickmeasure.append(clickNote)
             beatpos = ts.getBeatDuration(0).quarterLength
@@ -219,7 +221,7 @@ class MidiHandler:
                 
                  
             for b in range(0, ts.beatCount-1):
-                clickNote = note.Note('D#5')
+                clickNote = note.Note('F#2')
                 clickNote.duration = ts.getBeatDuration(beatpos)
                 beatpos+=clickNote.duration.quarterLength
                 clickmeasure.append(clickNote)
