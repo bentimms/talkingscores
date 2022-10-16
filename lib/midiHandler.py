@@ -34,7 +34,7 @@ class MidiHandler:
         self.all_selected_parts = []
         self.all_unselected_parts = []
         self.selected_instruement_parts = {} #key = instrument, value = [parts]
-
+        
         instrument_index=-1
         prev_instrument=""
         for part_index, part in enumerate(self.score.flat.getInstruments()):
@@ -116,12 +116,9 @@ class MidiHandler:
             if start==0 and end==1:
                 end=0
         
-        #for click in ['be']:
         for click in ['n', 'be']:
             self.tempo_shift = 0 #in a pickup bar - a rest is added to the start of bar 0 to make it a full bar - this offset needs adding to all future tempos 
-            #for tempo in [100, 150]: 
             for tempo in [50, 100, 150]: 
-                print ("doing tempo" + str(tempo))
                 #play all parts together
                 if self.play_together_all:
                     s = stream.Score(id='temp')
@@ -151,15 +148,6 @@ class MidiHandler:
                     self.insert_click_track(s, click)
                     s.write('midi', self.make_midi_path_from_options(start=start, end=end, sel="un", tempo=tempo, click=click)) 
 
-                #each individual part - if selected
-                for part_index, p in enumerate(self.scoreSegment.parts):
-                    if part_index in self.all_selected_parts:
-                        s = stream.Score(id='temp')
-                        s.insert(p.measures(start, end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature')))
-                        self.insert_tempos(s, offset, tempo/100)
-                        self.insert_click_track(s, click)
-                        s.write('midi', self.make_midi_path_from_options(start=start, end=end, part=part_index, tempo=tempo, click=click)) 
-                
                 #each instrument (with 1 or more parts) - if selected
                 for index, parts_list in enumerate(self.selected_instruement_parts.values()):
                     if (len(parts_list)>0):
@@ -169,8 +157,17 @@ class MidiHandler:
                         self.insert_tempos(s, offset, tempo/100)
                         self.insert_click_track(s, click)
                         s.write('midi', self.make_midi_path_from_options(start=start, end=end, ins=index+1, tempo=tempo, click=click)) 
+                        
+                        #now each separate part if the instrument has more than 1 part
+                        if (len(parts_list)>1):
+                            for pi in parts_list:
+                                s = stream.Score(id='temp')
+                                s.insert(self.scoreSegment.parts[pi].measures(start, end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature')))
+                                self.insert_tempos(s, offset, tempo/100)
+                                self.insert_click_track(s, click)
+                                s.write('midi', self.make_midi_path_from_options(start=start, end=end, part=pi, tempo=tempo, click=click)) 
+                                
 
-        
     def insert_click_track(self, s, click):
         if click == 'n':
             return
