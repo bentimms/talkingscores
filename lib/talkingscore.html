@@ -48,8 +48,8 @@ Click:
     <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ full_score_midis.midi_un + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play Unselected Instruments</a>
     <br/>
 {% endif %}
-<br/>
-<b>Instrument MIDIs</b><br/>
+
+<h3>Instrument MIDIs</h3>
 {% for index, ins in full_score_midis.selected_instruments_midis.items() %}
     <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ ins.midi + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play - {{instruments[ins.ins][0]}} </a><br/>
     <li style="margin-left:15px; list-style-type:none;">
@@ -58,11 +58,21 @@ Click:
         {% endfor %}
     </li>
 {% endfor %}
-<br/>
 
-<h2>Stop Music Playback</h2>
+
+<h1>Stop Music Playback</h1>
 <a href="#" onClick="MIDIjs.stop(); return false;">Stop playback</a>
 
+<h1>Summary:</h1>
+{% for summary in parts_summary %}
+    <h3>{{selected_part_names[loop.index-1]}}</h3>
+    {{summary}}
+    <br/>
+{% endfor %}
+<br/>
+
+
+<h1>Music segment descriptions and playback</h1>
 {% for segment in music_segments %}
 
     <h2>Bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}</h2>
@@ -92,7 +102,7 @@ Click:
         <br/>
     {% endif %}
     <br/>
-    <b>Instrument MIDIs</b><br/>
+    <h3>Instrument MIDIs</h3><br/>
     {% for index, ins in segment.selected_instruments_midis.items() %}
         <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ ins.midi + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play - {{instruments[ins.ins][0]}} - bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %} </a><br/>
         <li style="margin-left:15px; list-style-type:none;">
@@ -106,7 +116,7 @@ Click:
 
     {% for instrument_index, description in segment.selected_instruments_descriptions.items() %}
         {% if segment.selected_instruments_descriptions|length > 1 %}
-            <h2>{{instruments[instrument_index][0]}}</h2>
+            <h3>{{instruments[instrument_index][0]}}</h3>
         {% endif %}
         {% for part_description in description %}
             {% if description|length > 1 %}
@@ -115,7 +125,7 @@ Click:
             {#  Loop over each bar pulling out the beat-based dictionaries #}
             {% for bar, events_for_beats in part_description.items() %}
                 {% if not loop.first %}<br/>{% endif %}
-                <h3>Bar: {{ bar }}</h3>
+                <h4>Bar: {{ bar }}</h4>
 
                 {#  Loop over each beat pulling out the hand-based dictionaries #}
                 {% for beat, events_per_hand in events_for_beats.items() %}

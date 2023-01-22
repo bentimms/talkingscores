@@ -243,8 +243,6 @@ class Music21TalkingScore(TalkingScoreBase):
     def __init__(self, musicxml_filepath):
         self.filepath = os.path.realpath(musicxml_filepath)
         self.score = converter.parse(musicxml_filepath)
-        self.music_analyser = MusicAnalyser()
-        self.music_analyser.setScore(self.score)
         super(Music21TalkingScore, self).__init__()
 
     def get_title(self):
@@ -295,11 +293,15 @@ class Music21TalkingScore(TalkingScoreBase):
     def get_number_of_bars(self):
         return len(self.score.parts[0].getElementsByClass('Measure'))
 
+    # eg flute, piano, recorder, piano
+    # part_instruments = {1: ['Flute', 0, 1, 'P1'], 2: ['Piano', 1, 2, 'P2'], 3: ['Recorder', 3, 1, 'P3'], 4: ['Piano', 4, 2, 'P4']}
+    # part_names = {1: 'Right hand', 2: 'Left hand', 4: 'Right hand', 5: 'Left hand'}
+    # instrument names = ['Flute', 'Piano', 'Recorder', 'Piano']
     def get_instruments(self):
         #eg instrument.Name = Piano, instrument.partId = 1.  A piano has 2 staves ie two parts with the same name and same ID.  But if you have a second piano, it will have the same name but a different partId
-        self.part_instruments={} # key = instrument (1 based), value = ["part name", 1st part, number of parts, instrument.partId] 
-        self.part_names = {} # {part index, left or right hand etc} - 0 based - but only includes instruments with multiple parts.
-        instrument_names=[] #still needed for Info / Options page
+        self.part_instruments={} # key = instrument (1 based), value = ["part name", 1st part index 0 based, number of parts, instrument.partId] 
+        self.part_names = {} # key = part index 0 based, {part name eg "left hand" or "right hand" etc} - but part only included if instrument has multiple parts.
+        instrument_names=[] # each instrument instrument once even if it has multiple parts.  still needed for Info / Options page
         ins_count = 1
         for c, instrument in enumerate(self.score.flat.getInstruments()):
             if len(self.part_instruments) == 0 or self.part_instruments[ins_count-1][3] != instrument.partId:
@@ -325,13 +327,15 @@ class Music21TalkingScore(TalkingScoreBase):
 
         print("part_instruments = " + str(self.part_instruments))
         print("part names = " + str(self.part_names))
+        print("instrument names = " + str(instrument_names))
         return instrument_names 
 
     def compare_parts_with_selected_instruments(self):
         global settings
-        self.selected_instruments = [] #1 based list of indexes
-        self.unselected_instruments = []
+        self.selected_instruments = [] #1 based list of keys from part_instruments eg [1, 4]
+        self.unselected_instruments = [] # eg [2,3]
         self.binary_selected_instruments = 1 #bitwise representation of all instruments - 0=not included, 1=included
+        self.selected_part_names=[] # eg ["recorder", "piano - left hand", "piano - right hand"]
         for ins in self.part_instruments.keys():
             self.binary_selected_instruments =  self.binary_selected_instruments<<1
             if ins in settings['instruments']:
@@ -340,6 +344,17 @@ class Music21TalkingScore(TalkingScoreBase):
             else:
                 self.unselected_instruments.append(ins)
         
+        for ins in self.selected_instruments:
+            ins_name = self.part_instruments[ins][0]
+            if self.part_instruments[ins][2]==1: #instrument only has one part
+                self.selected_part_names.append(ins_name)
+            else: # instrument has multiple parts
+                pn1index = self.part_instruments[ins][1]
+                for pni in range(pn1index, pn1index+self.part_instruments[ins][2]):
+                    self.selected_part_names.append(ins_name + " - " + self.part_names[pni])
+                    
+        print ("selected_part_names = " + str(self.selected_part_names))
+
         if len(self.unselected_instruments)==0: #All instruments selected - so no unselected instruments to play
             settings['playUnselected'] = False
         if len(self.selected_instruments)==len(self.part_instruments) and settings['playAll']==True: #played by Play All
@@ -361,6 +376,7 @@ class Music21TalkingScore(TalkingScoreBase):
         if settings['playUnselected'] == True:
             self.binary_play_all +=1
         
+        print("selected_instruments = " + str(self.selected_instruments))
 
     def get_number_of_parts(self):
         self.get_instruments()
@@ -732,6 +748,8 @@ class HTMLTalkingScoreFormatter():
         print ("Settings...")
         print (settings)
         
+        self.music_analyser = MusicAnalyser()
+        self.music_analyser.setScore(self.score)
         start = self.score.score.parts[0].getElementsByClass('Measure')[0].number
         end = self.score.score.parts[0].getElementsByClass('Measure')[-1].number
         selected_instruments_midis = {}
@@ -756,6 +774,8 @@ class HTMLTalkingScoreFormatter():
                                 'play_all' : settings['playAll'],
                                 'play_selected' : settings['playSelected'],
                                 'play_unselected' : settings['playUnselected'],
+                                'parts_summary' : self.music_analyser.summary_parts,
+                                'selected_part_names' : self.score.selected_part_names,
                                 })
 
     def get_basic_information(self):

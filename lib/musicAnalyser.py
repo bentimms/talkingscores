@@ -67,28 +67,31 @@ class MusicAnalyser:
     score = None
     analyse_parts = []
     summary = ""
+    repetition_parts = []
     repetition_right_hand = ""
     repetition_left_hand = ""
 
     def setScore(self, sc):
-        self.score = sc
+        self.score = sc.score
         part_index = 0
         self.analyse_parts = []
-        for p in self.score.parts:
-            self.analyse_parts.append(AnalysePart())
-            self.analyse_parts[part_index].set_part(p)
-            part_index = part_index + 1
-        
-        self.repetition_right_hand = self.analyse_parts[0].describe_repetition()
-        self.summary_right_hand = self.analyse_parts[0].describe_summary()
-        
-        #temporary fix to make it work with only a single part
-        if len(self.analyse_parts)>1:
-            self.repetition_left_hand = self.analyse_parts[1].describe_repetition()
-            self.summary_left_hand = self.analyse_parts[1].describe_summary()
-        else:
-            self.repetition_left_hand = ""
-            self.summary_left_hand = ""
+        self.repetition_parts = []
+        self.summary_parts = []
+
+        analyse_index=0
+        for ins in sc.part_instruments:
+            if ins in sc.selected_instruments:
+                start_part=sc.part_instruments[ins][1]
+                instrument_len=sc.part_instruments[ins][2]
+                for part_index in range(start_part, start_part+instrument_len):
+                    self.analyse_parts.append(AnalysePart())
+                    self.analyse_parts[analyse_index].set_part(self.score.parts[part_index])
+                    summary = self.analyse_parts[analyse_index].describe_summary()
+                    summary += self.analyse_parts[analyse_index].describe_repetition_summary()
+                    self.summary_parts.append(summary)
+                    
+                    #self.repetition_parts.append(self.analyse_parts[analyse_index].describe_repetition())
+                    analyse_index = analyse_index + 1
 
 
 class AnalysePart:
@@ -563,7 +566,7 @@ class AnalysePart:
         elif percent>90:
             return "almost all"
         elif percent>75:
-            return "mostly"
+            return "most"
         elif percent>45:
             return "lots of"
         elif percent>30:
@@ -591,16 +594,17 @@ class AnalysePart:
     
     def describe_count_list(self, count_list, total):
         description = ""
-        for index, count_item in enumerate(count_list):
-            if count_item[1]/total>0.98:
-                description += "all " + str(count_item[0]) + ", "
-            elif count_item[1]/total>0.90:
-                description += "almost all " + str(count_item[0]) + ", "
-            elif count_item[1]/total>0.6:
-                description += "mostly " + str(count_item[0]) + ", "
-            elif count_item[1]/total>0.3:
-                description += "some " + str(count_item[0]) + ", "
-        
+        if total>0: 
+            for index, count_item in enumerate(count_list):
+                if count_item[1]/total>0.98:
+                    description += "all " + str(count_item[0]) + ", "
+                elif count_item[1]/total>0.90:
+                    description += "almost all " + str(count_item[0]) + ", "
+                elif count_item[1]/total>0.6:
+                    description += "mostly " + str(count_item[0]) + ", "
+                elif count_item[1]/total>0.3:
+                    description += "some " + str(count_item[0]) + ", "
+            
         description = self.replace_end_with(description, ", ", "")
         
         return description
@@ -608,24 +612,25 @@ class AnalysePart:
     #if no single item is over 30% for describe_count_list - then we might want to 
     def describe_count_list_several(self, count_list, total, item_name):
         description = ""
-        upto_percent = []
-        remaining_count = 0
-        progress_percent = 0
-        for index, count_item in enumerate(count_list):
-            if progress_percent<40:
-                upto_percent.append(count_item[0])
-                progress_percent += (count_item[1]/total)*100
+        if total>0:
+            upto_percent = []
+            remaining_count = 0
+            progress_percent = 0
+            for index, count_item in enumerate(count_list):
+                if progress_percent<40:
+                    upto_percent.append(count_item[0])
+                    progress_percent += (count_item[1]/total)*100
+                else:
+                    if count_item[1]>0:
+                        remaining_count += 1
+            
+            if len(upto_percent)<=4:
+                description="mostly " + self.comma_and_list(upto_percent)
+                if remaining_count>1:
+                    description+="; plus " + str(remaining_count) + " other " + item_name
             else:
-                if count_item[1]>0:
-                    remaining_count += 1
-        
-        if len(upto_percent)<=4:
-            description="mostly " + self.comma_and_list(upto_percent)
-            if remaining_count>1:
-                description+="; plus " + str(remaining_count) + " other " + item_name
-        else:
-            description = str(len(upto_percent)) + " " + item_name
-            description += ", the most common is " + enumerate(count_list)[0][0]
+                description = str(len(upto_percent)) + " " + item_name
+                description += ", the most common is " + enumerate(count_list)[0][0]
         return description
 
 
@@ -720,6 +725,112 @@ class AnalysePart:
             to_return += add
         return to_return
 
+    # eg bars 1-4 are repeated all the way through...
+    # eg a few individual bars repeated several times...
+    # eg 1 and 2 bar sections repeated a lot...
+    # how many individual bars out of the total - are unique?
+    # out of them - how many have the same rhythm?
+    # don't list out every time that every bar is used.
+    def describe_repetition_summary(self):
+        repetition = ""
+
+        # see if a group of bars repetition is over a third of the score
+        for group in self.measure_groups_list:
+            group_repetition_percent = ((group[0][1]-group[0][0]+1)*len(group)/len(self.measure_indexes))*100
+            if group_repetition_percent>33:
+                if (group[0][1]-group[0][0]==1): # x and y or x to y.
+                    repetition+="Bars " + str(group[0][0]) + " and " + str(group[0][1])
+                else:
+                    repetition+="Bars " + str(group[0][0]) + " to " + str(group[0][1])
+                repetition += " are used "
+                repetition += self.describe_repetition_percentage(group_repetition_percent)
+                repetition += " of the way through.  "
+
+        # see if an individual bar is used in over a thrid of the score
+        for key, ms in self.repeated_measures_not_in_groups_dictionary.items():
+            percent_usage = len(ms) / len(self.measure_indexes)*100
+            if percent_usage > 33:
+                repetition += "Bar " + str(key) + " is used " 
+                repetition += self.describe_percentage(percent_usage)
+                repetition += " of the way through.  "     
+    
+        # see if a group of bars (just rhythm - not full match) is over a third of the score
+        for group in self.measure_rhythm_not_full_match_groups_list:
+            group_repetition_percent = ((group[0][1]-group[0][0]+1)*len(group)/len(self.measure_indexes))*100
+            if group_repetition_percent>33:
+                repeition += "The rhythm in bars "
+                if (group[0][1]-group[0][0]==1): # x and y or x to y.
+                    repetition += str(group[0][0]) + " and " + str(group[0][1])
+                else:
+                    repetition += str(group[0][0]) + " to " + str(group[0][1])
+                repetition += " are used "
+                repetition += self.describe_repetition_percentage(group_repetition_percent)
+                repetition += " of the way through.  "
+
+        # see if an individual bar (just rhythm - not full match) is used in over a thrid of the score
+        for key, ms in self.repeated_rhythm_measures_not_full_match_not_in_groups_dictionary.items():
+            percent_usage = len(ms) / len(self.measure_indexes)*100
+            if percent_usage > 33:
+                repetition += "The rhythm in bar " + str(key) + " is used " 
+                repetition += self.describe_percentage(percent_usage)
+                repetition += " of the way through.  "     
+    
+        # see if a group of bars (just intervals - not full match) is over a third of the score
+        for group in self.measure_intervals_not_full_match_groups_list:
+            group_repetition_percent = ((group[0][1]-group[0][0]+1)*len(group)/len(self.measure_indexes))*100
+            if group_repetition_percent>33:
+                repeition += "The intervals in bars "
+                if (group[0][1]-group[0][0]==1): # x and y or x to y.
+                    repetition += str(group[0][0]) + " and " + str(group[0][1])
+                else:
+                    repetition += str(group[0][0]) + " to " + str(group[0][1])
+                repetition += " are used "
+                repetition += self.describe_repetition_percentage(group_repetition_percent)
+                repetition += " of the way through.  "
+
+        # see if an individual bar (just intervals - not full match) is used in over a thrid of the score
+        for key, ms in self.repeated_intervals_measures_not_full_match_not_in_groups_dictionary.items():
+            percent_usage = len(ms) / len(self.measure_indexes)*100
+            if percent_usage > 33:
+                repetition += "The intervals in bar " + str(key) + " is used " 
+                repetition += self.describe_percentage(percent_usage)
+                repetition += " of the way through.  "     
+    
+        # at this point if you have some bars that are the same pitch and rhythm - and some bars that are the same rhythm and also the same rhythm as the previous full matches - but neither is more than 33% - then nothing gets mentioned...
+        if repetition=="":
+            check_rhythm_match = self.calculate_repeated_measures_lists(self.measure_rhythm_analyse_indexes_dictionary, False)
+            check_rhythm_match.sort(reverse=True, key=lambda item: len(item))
+            for check in check_rhythm_match:
+                percent_usage = (len(check) / len(self.measure_indexes))*100
+                if percent_usage > 33:
+                    repetition += "The rhythm in bar " + str(check[0]) + " is used " 
+                    repetition += self.describe_percentage(percent_usage)
+                    repetition += " of the way through.  "  
+                else:
+                    break
+
+            # check intervals too
+            check_intervals_match = self.calculate_repeated_measures_lists(self.measure_intervals_analyse_indexes_dictionary, False)
+            check_intervals_match.sort(reverse=True, key=lambda item: len(item))
+            for check in check_intervals_match:
+                percent_usage = (len(check) / len(self.measure_indexes))*100
+                if percent_usage > 33:
+                    repetition += "The intervals in bar " + str(check[0]) + " is used " 
+                    repetition += self.describe_percentage(percent_usage)
+                    repetition += " of the way through.  "  
+                else:
+                    break
+
+        repetition += "There are " + str(len(self.measure_analyse_indexes_list)) + " unique measures - "
+        repetition += " as well as " + str(len(self.measure_rhythm_analyse_indexes_list)) + " measures with unique rhythm "
+        repetition += " and " + str(len(self.measure_intervals_analyse_indexes_list)) + " measures with unique intervals...  "
+
+        if repetition!="":
+            repetition = "<br/>"+repetition
+        return repetition
+
+
+
     # describes groups of measures and individual measures where the notes pitches and / or rhythm are the same
     def describe_repetition(self):
         repetition = ""
@@ -782,7 +893,7 @@ class AnalysePart:
                     rhythm_repetition += str(ms[0])
                 rhythm_repetition += ".  "
         
-        #individual measures with repeated rhythm  
+        # individual measures with repeated rhythm  
         for key, ms in self.repeated_rhythm_measures_not_full_match_not_in_groups_dictionary.items():
             rhythm_repetition += "The rhythm in bar " + str(key) + " is used at "
             for index, m in enumerate(ms):

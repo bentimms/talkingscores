@@ -69,10 +69,6 @@ class TSScore(object):
             'instruments': score.get_instruments(),
             'number_of_bars': score.get_number_of_bars(),
             'number_of_parts': score.get_number_of_parts(),
-            'repetition_right_hand' : score.music_analyser.repetition_right_hand,
-            'repetition_left_hand' : score.music_analyser.repetition_left_hand,
-            'summary_right_hand' : score.music_analyser.summary_right_hand,
-            'summary_left_hand' : score.music_analyser.summary_left_hand,
         }
 
 

@@ -16,9 +16,19 @@
         <p class="lead">For more information about specific changes - see the history on <a href="https://github.com/bentimms/talkingscores" target="_blank">Github</a>.</p>
 
         <p class="lead"><b>Current State</b><br/>
-            This project currently may produce an acceptable output for fairly simple piano music - ie one instrument with 2 staves (treble and bass clef).
-            <ul>
-                <li class="lead">Anything other than a single treble stave and a single bass clef stave causes odd results.  In MuseScore - that is a single instrument with two staves.</li>
+            <ul class="lead">
+                <li>This project currently may produce an acceptable output for fairly simple scores - potentially with multiple instruments.</li>
+                <li>At present - most of the testing is carried out using musicxml files exported from MuseScore.</li>
+                <li>If the musicxml file is too large then processing will time out...</li>
+            </ul>
+        </p>
+
+        <p class="lead"><b>17th October 2022</b><br/>
+            <ul class="lead">
+                <li>Each instrument is described separately. </li>
+                <li>If the score has multiple instruments - but you don't select all of them for description - you have the option to listen to All instruments together / All selected instruments together / All unselected instruments together.  This should help to demonstrate how particular instruments fit into the rest of the score.</li>
+                <li>While reading the Talking Score - music segments can be played back at 50% / 100% / 150% speed - with or without a click track / metronome.  This means 6 midi files are created for each single part instrument in each segment.  For a long score with lots of parts - this would take too long and the request would time out...  Therefore, midi files are now created on demand - when the first midi file from a particular segment is requested.</li>
+
             </ul>
         </p>
 
