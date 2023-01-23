@@ -775,6 +775,7 @@ class HTMLTalkingScoreFormatter():
                                 'play_selected' : settings['playSelected'],
                                 'play_unselected' : settings['playUnselected'],
                                 'parts_summary' : self.music_analyser.summary_parts,
+                                'general_summary' : self.music_analyser.general_summary,
                                 'selected_part_names' : self.score.selected_part_names,
                                 })
 
