@@ -755,8 +755,8 @@ class AnalysePart:
 
 
     # eg bars 1-4 are repeated all the way through...
-    # todo - eg a few individual bars repeated several times...
-    # todo - eg 1 and 2 bar sections repeated a lot...
+    # eg a few individual bars repeated several times...
+    # eg 1 and 2 bar sections repeated a lot...
     # how many individual bars out of the total - are unique?
     # how many have the same rhythm / intervals ?
     # don't list out every time that every bar is used.
@@ -803,6 +803,58 @@ class AnalysePart:
                 else:
                     break
 
+        # look at number of each repetition length
+        # todo - maybe repetition_lengths should be {[section length, number of usages]}
+        repetition_lengths = {} # full match.  key = length. {number of individual sections of that length.  Not the number of times they are repeated}
+        rhythm_interval_repetition_lengths = {} # full match - just rhythm or interval.  key = length. {number of individual sections of that length.  Not the number of times they are repeated}
+        total_lengths=0
+        for group in self.measure_groups_list:
+            length = group[0][1]-group[0][0]+1
+            if length in repetition_lengths:
+                repetition_lengths[length] = repetition_lengths[length] + 1
+            else:
+                repetition_lengths[length] = 1
+            
+        for group in self.measure_rhythm_not_full_match_groups_list:
+            length = group[0][1]-group[0][0]+1
+            if length in repetition_lengths:
+                rhythm_interval_repetition_lengths[length] = repetition_lengths[length] + 1
+            else:
+                rhythm_interval_repetition_lengths[length] = 1
+            
+        for group in self.measure_intervals_not_full_match_groups_list:
+            length = group[0][1]-group[0][0]+1
+            if length in repetition_lengths:
+                rhythm_interval_repetition_lengths[length] = repetition_lengths[length] + 1
+            else:
+                rhythm_interval_repetition_lengths[length] = 1
+            
+        repetition_lengths[1] = len(self.repeated_measures_not_in_groups_dictionary)
+        rhythm_interval_repetition_lengths[1] = len(self.repeated_rhythm_measures_not_full_match_not_in_groups_dictionary)
+        rhythm_interval_repetition_lengths[1] += len(self.repeated_intervals_measures_not_full_match_not_in_groups_dictionary)
+        print("repetition lengths = " + str(repetition_lengths))
+        print("rhythm and interval repetition lengths = " + str(rhythm_interval_repetition_lengths))
+
+        for k,v in repetition_lengths.items():
+            total_lengths += v
+        sorted_repetition_lengths = sorted(repetition_lengths.items(), reverse=False, key=lambda item: item)
+        temp = self.describe_count_list(sorted_repetition_lengths, total_lengths)
+        temp = self.replace_end_with(temp, ", ", "")
+        if temp=="":
+            temp = self.describe_count_list_several(sorted_repetition_lengths, total_lengths, "lengths")
+        repetition += "The repeated sections are " + temp + " measures long.  " 
+        
+        #rhythm or interval
+        total_lengths = 0
+        for k,v in rhythm_interval_repetition_lengths.items():
+            total_lengths += v
+        sorted_repetition_lengths = sorted(rhythm_interval_repetition_lengths.items(), reverse=False, key=lambda item: item)
+        temp = self.describe_count_list(sorted_repetition_lengths, total_lengths)
+        temp = self.replace_end_with(temp, ", ", "")
+        if temp=="":
+            temp = self.describe_count_list_several(sorted_repetition_lengths, total_lengths, "lengths")
+        repetition += "The repeated sections of just rhythm / intervals are " + temp + " measures long.  " 
+        
         repetition += "There are " + str(len(self.measure_analyse_indexes_list)) + " unique measures - "
         repetition += " of these, " + str(len(self.measure_rhythm_analyse_indexes_list)) + " measures have unique rhythm "
         repetition += " and " + str(len(self.measure_intervals_analyse_indexes_list)) + " measures have unique intervals...  "
