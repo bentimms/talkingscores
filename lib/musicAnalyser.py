@@ -77,6 +77,7 @@ class MusicAnalyser:
         self.analyse_parts = []
         self.repetition_parts = []
         self.summary_parts = []
+        self.repetition_in_contexts = []
         self.general_summary = ""
 
         analyse_index=0
@@ -89,6 +90,7 @@ class MusicAnalyser:
                     self.analyse_parts[analyse_index].set_part(self.score.parts[part_index])
                     summary = self.analyse_parts[analyse_index].describe_summary()
                     summary += self.analyse_parts[analyse_index].describe_repetition_summary()
+                    self.repetition_in_contexts.append(self.analyse_parts[analyse_index].describe_repetition_in_context())
                     self.summary_parts.append(summary)
                     
                     #self.repetition_parts.append(self.analyse_parts[analyse_index].describe_repetition())
@@ -228,7 +230,7 @@ class AnalysePart:
         self.measure_analyse_indexes_dictionary = {} # {index in measure_analyse_indexes_list, [list of measure indexes]}
         self.measure_analyse_indexes_all = {} # the index of every measure within measure_analyse_indexes_list {meausre_index, [index from measure_analyse_indexes_list, index from measure_analyse_indexes_dictionary]}
         self.repeated_measures_lists = [] # List of lists of measure indexes where measures match [[1, 3, 6], [2, 4]]
-        self.measure_groups_list = [] #groups of repeated measures [ [[1st group 1st occurance start bar, 1st group 1st occurance last bar], [1st group 2nd occurance start bar, 1st group 2nd occurance last bar]], [[2nd group 1st occurance start bar, 2nd group 1st occurance last bar], [2nd group 2nd occurance start bar, 2nd group 2nd occurance last bar]] ] eg [[1, 4], [9, 12]], [[7, 8], [15, 16]] ]
+        self.measure_groups_list = [] #groups of repeated measures [ [[1st group 1st occurance start bar, 1st group 1st occurance last bar], [1st group 2nd occurance start bar, 1st group 2nd occurance last bar]], [[2nd group 1st occurance start bar, 2nd group 1st occurance last bar], [2nd group 2nd occurance start bar, 2nd group 2nd occurance last bar]] ] eg [ [[1, 4], [9, 12]], [[7, 8], [15, 16]] ]
         self.repeated_measures_not_in_groups_dictionary = {} # repeated measures that aren't in a group.  measure index, list of measures it is repeated at
 
         self.measure_rhythm_analyse_indexes_list = [] # each element is an AnalyseSection for a unique measure (containing a list of AnalyseIndex) - but ignoring pitch and intervals etc
@@ -863,9 +865,65 @@ class AnalysePart:
             repetition = "<br/>"+repetition
         return repetition
 
+    # you get a KeyError if you do dict[key] += value if the key doesn't already exist...
+    def insert_or_plus_equals(self, dict, key, value):
+        if key in dict:
+            dict[key] += value
+        else:
+            dict[key] = value
+
+
+    # when was a measure or section first used, when was it last used up until this point
+    # measures 20, to, 23 are first used at 6 and last used at bar 12
+    # measures 7 AND 8 are used first used at 1 and last used at bar 6
+    def describe_repetition_in_context(self):
+        print("describe repetition in context...")
+
+        repetition_in_context = {} # key = measure number.  value = string
+        #if len(self.measure_groups_list)>0:
+        for group in self.measure_groups_list:
+            #see if a group repetition is used a lot so change what we say about it to avoid becoming too verbose
+            group_repetition_percent = ((group[0][1]-group[0][0]+1)*len(group)/len(self.measure_indexes))*100
+            used_lots = False # todo maybe say something about this
+            if group_repetition_percent>50:
+                used_lots = True
+            
+            and_or_through = " through "
+            if (group[0][1]-group[0][0]==1): # x and y or x to y.
+                and_or_through = " and "
+                    
+            temp = ""
+            
+            for index, usage in enumerate(group):
+                if index>=1:
+                    temp = "Bars " + str(usage[0]) + and_or_through + str(usage[1]) 
+                    temp += " were first used " + str(group[0][0])
+                    if index>=2:
+                        temp += " and last used at " + str(group[index-1][0])
+                else:
+                    temp = "Bars " + str(usage[0]) + and_or_through + str(usage[1]) 
+                    temp += " are used " + (str(len(group)-1)) + " more times.  "
+            
+                self.insert_or_plus_equals(repetition_in_context, usage[0], temp + ".  ")
+                
+        for key, ms in self.repeated_measures_not_in_groups_dictionary.items():
+            temp = "Bar " + str(key) + " is used " + str(len(ms)) + " more times.  "
+            self.insert_or_plus_equals(repetition_in_context, key, temp)
+
+            for index, m in enumerate(ms):
+                temp = "Bar " + str(m) 
+                temp += " was first used at " + str(key)
+                if index>=1:
+                    temp += " and last used at " + str(ms[index-1])
+                            
+                self.insert_or_plus_equals(repetition_in_context, m, temp + ".  ")
+
+            
+        return repetition_in_context
 
 
     # describes groups of measures and individual measures where the notes pitches and / or rhythm are the same
+    # but puts them all in one long string - which isn't very useful
     def describe_repetition(self):
         repetition = ""
         if len(self.measure_groups_list)>0:
@@ -978,6 +1036,7 @@ class AnalysePart:
         repetition += interval_repetition
 
         return repetition
+
 
     #analyse each part
     def set_part(self, p):

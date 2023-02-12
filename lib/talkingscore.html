@@ -125,9 +125,12 @@ Click:
             {% endif %}
             {#  Loop over each bar pulling out the beat-based dictionaries #}
             {% for bar, events_for_beats in part_description.items() %}
-                {% if not loop.first %}<br/>{% endif %}
+                {#% if not loop.first %}<br/>{% endif %#}
                 <h4>Bar: {{ bar }}</h4>
-
+                {% if bar in repetition_in_contexts[instrument_index] %}
+                    Repetition - {{repetition_in_contexts[instrument_index][bar]}} 
+                    <br/> <br/>
+                {% endif %}
                 {#  Loop over each beat pulling out the hand-based dictionaries #}
                 {% for beat, events_per_hand in events_for_beats.items() %}
                     {# {% if not loop.first %}<br/>{% endif %}#}
