@@ -872,16 +872,14 @@ class AnalysePart:
         else:
             dict[key] = value
 
-
-    # when was a measure or section first used, when was it last used up until this point
-    # measures 20, to, 23 are first used at 6 and last used at bar 12
-    # measures 7 AND 8 are used first used at 1 and last used at bar 6
-    def describe_repetition_in_context(self):
-        print("describe repetition in context...")
-
-        repetition_in_context = {} # key = measure number.  value = string
-        #if len(self.measure_groups_list)>0:
-        for group in self.measure_groups_list:
+    # updates dictionary at the index of the first bar each time where a section is used
+    # section first usage - says how many times it is used later.  
+    # section second usage - says when it was first used.
+    # after second usage - says first and most recent time it was used
+    # repeat_what eg "full match", "rhythm", "intervals"
+    # modifies the repetition_in_context dictionary
+    def describe_section_usage_in_context(self, groups_list, repeat_what, repetition_in_context):
+        for group in groups_list:
             #see if a group repetition is used a lot so change what we say about it to avoid becoming too verbose
             group_repetition_percent = ((group[0][1]-group[0][0]+1)*len(group)/len(self.measure_indexes))*100
             used_lots = False # todo maybe say something about this
@@ -893,31 +891,55 @@ class AnalysePart:
                 and_or_through = " and "
                     
             temp = ""
-            
             for index, usage in enumerate(group):
                 if index>=1:
-                    temp = "Bars " + str(usage[0]) + and_or_through + str(usage[1]) 
+                    temp = repeat_what + str(usage[0]) + and_or_through + str(usage[1]) 
                     temp += " were first used " + str(group[0][0])
                     if index>=2:
-                        temp += " and last used at " + str(group[index-1][0])
+                        temp += " and lately used at " + str(group[index-1][0])
                 else:
                     temp = "Bars " + str(usage[0]) + and_or_through + str(usage[1]) 
                     temp += " are used " + (str(len(group)-1)) + " more times.  "
             
                 self.insert_or_plus_equals(repetition_in_context, usage[0], temp + ".  ")
-                
-        for key, ms in self.repeated_measures_not_in_groups_dictionary.items():
+           
+    # updates dictionary at the index the bar each tine where a bar is used
+    # bar first usage - says how many times it is used later.  
+    # bar second usage - says when it was first used.
+    # after second usage - says first and most recent time it was used
+    # repeat_what eg "full match", "rhythm", "intervals"
+    # modifies the repetition_in_context dictionary
+    def describe_measure_usage_in_context(self, repeated_measures_not_in_groups_dictionary, repeat_what, repetition_in_context):
+        for key, ms in repeated_measures_not_in_groups_dictionary.items():
             temp = "Bar " + str(key) + " is used " + str(len(ms)) + " more times.  "
             self.insert_or_plus_equals(repetition_in_context, key, temp)
 
             for index, m in enumerate(ms):
-                temp = "Bar " + str(m) 
+                temp = repeat_what + str(m) 
                 temp += " was first used at " + str(key)
                 if index>=1:
-                    temp += " and last used at " + str(ms[index-1])
+                    temp += " and lately used at " + str(ms[index-1])
                             
                 self.insert_or_plus_equals(repetition_in_context, m, temp + ".  ")
 
+        
+
+    # when was a measure or section first used, when was it last used up until this point
+    # measures 20, to, 23 are first used at 6 and last used at bar 12
+    # measures 7 AND 8 are used first used at 1 and last used at bar 6
+    def describe_repetition_in_context(self):
+        print("describe repetition in context...")
+
+        repetition_in_context = {} # key = measure number.  value = string
+        #todo - could eg bar 4 could be full match for another bar - but only rhythm match for another bar.  The later rhythm match will say when it was first used - but the earlier full match won't treat it like the first rhythm match and say how many times it was used.  
+        self.describe_section_usage_in_context(self.measure_groups_list, "Bars ", repetition_in_context)
+        self.describe_measure_usage_in_context(self.repeated_measures_not_in_groups_dictionary, "Bar ", repetition_in_context)      
+        
+        self.describe_section_usage_in_context(self.measure_rhythm_not_full_match_groups_list, "The rhythm in bars ", repetition_in_context)
+        self.describe_measure_usage_in_context(self.repeated_rhythm_measures_not_full_match_not_in_groups_dictionary, "The rhythm in bar ", repetition_in_context)      
+        
+        self.describe_section_usage_in_context(self.measure_intervals_not_full_match_groups_list, "The intervals in bars ", repetition_in_context)
+        self.describe_measure_usage_in_context(self.repeated_intervals_measures_not_full_match_not_in_groups_dictionary, "The intervals in bar ", repetition_in_context)      
             
         return repetition_in_context
 
