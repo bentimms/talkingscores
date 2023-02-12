@@ -442,6 +442,7 @@ class Music21TalkingScore(TalkingScoreBase):
         return events_by_bar
 
     def update_events_for_measure(self, measure, events, voice:int=1):
+        previous_beat = 1
         for element in measure.elements:
             element_type = type(element).__name__
             event = None
@@ -483,10 +484,18 @@ class Music21TalkingScore(TalkingScoreBase):
             event.duration += self.map_duration(element.duration)
             if settings['dotPosition']=="after":
                 event.duration += " " + self.map_dots(element.duration.dots)
+            
+            if (math.floor(element.beat)==math.floor(previous_beat)): # eg was 1 now 1.5 ie same beat
+                beat = previous_beat
+            elif (math.floor(element.beat)==element.beat): # was 1.5 now 2.0 - ie start of a new beat
+                beat = math.floor(element.beat) # strip off the point 0
+            else: # eg was 1 now 2.5 ie part way through a new beat - mention decimal
+                beat = element.beat
+            previous_beat = beat
 
             events\
                 .setdefault(measure.measureNumber, {})\
-                .setdefault(math.floor(element.beat), {})\
+                .setdefault(beat, {})\
                 .setdefault(voice, {})\
                 .setdefault(description_order, [])\
                 .append(event)
