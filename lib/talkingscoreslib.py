@@ -394,16 +394,19 @@ class Music21TalkingScore(TalkingScoreBase):
     def get_events_for_bar_range(self, start_bar, end_bar, part_index):
         events_by_bar = {}
         # Iterate over the spanners
-        """ 
-        #todo - this is really slow and inefficient as it looks at spanners for the whole score during each segment!
-        for spanner in self.score.flat.spanners.elements:
-            spanner_type = type(spanner).__name__
+        #todo - mention slurs?  Make it an option?  
+        #todo - this looks at spanners per part so eg crescendos are described for the right hand but not the left of a piano...
+        #todo - it is a bit inefficient.  It looks spanners from the start of the part for each segment...
+        for spanner in self.score.parts[part_index].spanners.elements:
+            first = spanner.getFirst()
+            last  = spanner.getLast()
+            if first.measureNumber is None or last.measureNumber is None:
+                continue
+            elif first.measureNumber > end_bar: # all remaining spanners are after this segment so break the for loop
+                break
 
-            if spanner_type == 'Crescendo' or spanner_type == 'Diminuendo':
-                first = spanner.getFirst()
-                last  = spanner.getLast()
-                if first.measureNumber is None or last.measureNumber is None:
-                    continue
+            spanner_type = type(spanner).__name__
+            if spanner_type == 'Crescendo' or spanner_type == 'Diminuendo': 
                 description_order = 0
                 voice = 1
 
@@ -411,23 +414,20 @@ class Music21TalkingScore(TalkingScoreBase):
                     event = TSDynamic(long_name='%s start' % spanner_type)
                     events_by_bar\
                         .setdefault(first.measureNumber, {})\
-                        .setdefault(math.floor(first.beat), {})\
-                        .setdefault('Both', {})\
+                        .setdefault(first.beat, {})\
                         .setdefault(voice, {})\
                         .setdefault(description_order, [])\
                         .append(event)
 
                 if last.measureNumber >= start_bar and last.measureNumber <= end_bar:
                     event = TSDynamic(long_name='%s end' % spanner_type)
-                     # Note - THIS WILL NOT HANDLE CRESCENDOS/DIMINUENDOS THAT SPAN MEASURES
+                    #todo -  Note - THIS WILL NOT HANDLE CRESCENDOS/DIMINUENDOS THAT SPAN MEASURES
                     events_by_bar\
                         .setdefault(last.measureNumber, {})\
-                        .setdefault(math.floor(last.beat) + last.duration.quarterLength - 1, {})\
-                        .setdefault('BothAfter', {})\
+                        .setdefault(last.beat + last.duration.quarterLength - 1, {})\
                         .setdefault(voice, {})\
                         .setdefault(description_order, [])\
                         .append(event)
-        """
         
         measures = self.score.parts[part_index].measures(start_bar, end_bar, collect=('TimeSignature'))
         print("\n\nProcessing part %s, bars %s to %s" % (part_index, start_bar, end_bar))
