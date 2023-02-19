@@ -16,6 +16,7 @@ from abc import ABCMeta, abstractmethod
 from jinja2 import Template
 from datetime import datetime #start_time = datetime.now()
 logger = logging.getLogger("TSScore")
+import time
 
 global settings
 
@@ -428,7 +429,7 @@ class Music21TalkingScore(TalkingScoreBase):
                         .append(event)
         """
         
-        measures = self.score.parts[part_index].measures(start_bar, end_bar)
+        measures = self.score.parts[part_index].measures(start_bar, end_bar, collect=('TimeSignature'))
         print("\n\nProcessing part %s, bars %s to %s" % (part_index, start_bar, end_bar))
         # Iterate over the bars one at a time
         # pickup bar has to request measures 0 to 1 above otherwise it returns an measures just has empty parts - so now restrict it just to bar 0...
@@ -816,6 +817,8 @@ class HTMLTalkingScoreFormatter():
         logger.info("Start of get_music_segments")
         music_segments = []
         number_of_bars = self.score.get_number_of_bars()
+        
+        t1s = time.time()
         #pickup bar
         if self.score.score.parts[0].getElementsByClass('Measure')[0].number != self.score.score.parts[0].measures(1,2).getElementsByClass('Measure')[0].number:
             
@@ -862,7 +865,8 @@ class HTMLTalkingScoreFormatter():
             music_segments.append(music_segment)
 
         logger.info("End of get_music_segments")
-        
+        t1e = time.time()
+        print("described parts etc = " + str(t1e-t1s))
         return music_segments
 
 
