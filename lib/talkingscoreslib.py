@@ -429,7 +429,11 @@ class Music21TalkingScore(TalkingScoreBase):
                         .setdefault(description_order, [])\
                         .append(event)
         
-        measures = self.score.parts[part_index].measures(start_bar, end_bar, collect=('TimeSignature'))
+        # using collect=('TimeSignature') is slow.  It is almost twice as fast to use a dictionary of time signatures and insert at the start of each segment.
+        measures = self.score.parts[part_index].measures(start_bar, end_bar)
+        if len(measures.measure(start_bar).getElementsByClass(meter.TimeSignature))==0:
+            measures.measure(start_bar).insert(0, self.timeSigs[start_bar])
+
         print("\n\nProcessing part %s, bars %s to %s" % (part_index, start_bar, end_bar))
         # Iterate over the bars one at a time
         # pickup bar has to request measures 0 to 1 above otherwise it returns an measures just has empty parts - so now restrict it just to bar 0...
@@ -819,9 +823,14 @@ class HTMLTalkingScoreFormatter():
         number_of_bars = self.score.get_number_of_bars()
         
         t1s = time.time()
+        
+        self.score.timeSigs = {}
+        previous_ts = self.score.score.parts[0].getElementsByClass('Measure')[0].getElementsByClass(meter.TimeSignature)[0]
+        
         #pickup bar
         if self.score.score.parts[0].getElementsByClass('Measure')[0].number != self.score.score.parts[0].measures(1,2).getElementsByClass('Measure')[0].number:
-            
+            previous_ts = self.score.score.parts[0].getElementsByClass('Measure')[0].getElementsByClass(meter.TimeSignature)[0]
+            self.score.timeSigs[0] = previous_ts
             #todo - where should spanners and dynamics etc go?
             selected_instruments_descriptions = {} # key = instrument index, {[part descriptions]} 
             
@@ -843,6 +852,10 @@ class HTMLTalkingScoreFormatter():
             end_bar_index = bar_index + settings['barsAtATime'] - 1
             if end_bar_index > number_of_bars:
                 end_bar_index = number_of_bars
+            for checkts in range(bar_index, end_bar_index+1):
+                if len(self.score.score.parts[0].measure(bar_index).getElementsByClass(meter.TimeSignature))>0:
+                    previous_ts = self.score.score.parts[0].measure(bar_index).getElementsByClass(meter.TimeSignature)[0]
+                self.score.timeSigs[checkts] = previous_ts
 
             # for offset, events in events_for_bar_range.iteritems():
             # events_ordered_by_beat = OrderedDict(sorted(events_for_bar_range.items(), key=lambda t: t[0]))
@@ -867,6 +880,8 @@ class HTMLTalkingScoreFormatter():
         logger.info("End of get_music_segments")
         t1e = time.time()
         print("described parts etc = " + str(t1e-t1s))
+        print ("time sigs measure dictionary = ")
+        print(self.score.timeSigs)
         return music_segments
 
 
