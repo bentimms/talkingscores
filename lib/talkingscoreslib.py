@@ -393,6 +393,23 @@ class Music21TalkingScore(TalkingScoreBase):
 
     def get_events_for_bar_range(self, start_bar, end_bar, part_index):
         events_by_bar = {}
+        
+        # using collect=('TimeSignature') is slow.  It is almost twice as fast to use a dictionary of time signatures and insert at the start of each segment.
+        measures = self.score.parts[part_index].measures(start_bar, end_bar)
+        if len(measures.measure(start_bar).getElementsByClass(meter.TimeSignature))==0:
+            measures.measure(start_bar).insert(0, self.timeSigs[start_bar])
+
+        print("\n\nProcessing part %s, bars %s to %s" % (part_index, start_bar, end_bar))
+        
+        # Iterate over the bars one at a time
+        # pickup bar has to request measures 0 to 1 above otherwise it returns an measures just has empty parts - so now restrict it just to bar 0...
+        if start_bar==0 and end_bar==1:
+            end_bar=0
+        for bar_index in range(start_bar, end_bar + 1):
+            measure = measures.measure(bar_index)
+            if measure is not None:
+                self.update_events_for_measure(measure, events_by_bar)
+
         # Iterate over the spanners
         #todo - mention slurs?  Make it an option?  
         #todo - this looks at spanners per part so eg crescendos are described for the right hand but not the left of a piano...
@@ -429,20 +446,6 @@ class Music21TalkingScore(TalkingScoreBase):
                         .setdefault(description_order, [])\
                         .append(event)
         
-        # using collect=('TimeSignature') is slow.  It is almost twice as fast to use a dictionary of time signatures and insert at the start of each segment.
-        measures = self.score.parts[part_index].measures(start_bar, end_bar)
-        if len(measures.measure(start_bar).getElementsByClass(meter.TimeSignature))==0:
-            measures.measure(start_bar).insert(0, self.timeSigs[start_bar])
-
-        print("\n\nProcessing part %s, bars %s to %s" % (part_index, start_bar, end_bar))
-        # Iterate over the bars one at a time
-        # pickup bar has to request measures 0 to 1 above otherwise it returns an measures just has empty parts - so now restrict it just to bar 0...
-        if start_bar==0 and end_bar==1:
-            end_bar=0
-        for bar_index in range(start_bar, end_bar + 1):
-            measure = measures.measure(bar_index)
-            if measure is not None:
-                self.update_events_for_measure(measure, events_by_bar)
 
         return events_by_bar
 

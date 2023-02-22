@@ -19,7 +19,18 @@
             <ul class="lead">
                 <li>This project currently may produce an acceptable output for fairly simple scores - potentially with multiple instruments.</li>
                 <li>At present - most of the testing is carried out using musicxml files exported from MuseScore.</li>
-                <li>If the musicxml file is too large then processing will time out...</li>
+                <li>If the musicxml file is too large - then processing will time out (after about 5 minutes)...</li>
+            </ul>
+        </p>
+
+        <p class="lead"><b>22nd February 2023</b><br/>
+            <ul class="lead">
+                <li>Auto summary works on scores with multiple parts.</li>
+                <li>Auto summary now only mentions repetition if is a significant length instead of listing every time each section is repeated.  It does however, now mention the number of unique bars.</li>
+                <li>Repetition is now described within the score.  Eg this bar was first used at bar 2 and most recently used at bar 7.</li>
+                <li>Describe beat fractions.  Eg beat 1 - dotted crochet.  Beat 2.5 - quaver.</li>
+                <li>Significantly increased the speed of producing a talking score - potentially over twice as fast.</li>
+                <li>Improved the document outline (how headings are nested) - for easier screen reader navigation.</li>
             </ul>
         </p>
 
@@ -28,7 +39,6 @@
                 <li>Each instrument is described separately. </li>
                 <li>If the score has multiple instruments - but you don't select all of them for description - you have the option to listen to All instruments together / All selected instruments together / All unselected instruments together.  This should help to demonstrate how particular instruments fit into the rest of the score.</li>
                 <li>While reading the Talking Score - music segments can be played back at 50% / 100% / 150% speed - with or without a click track / metronome.  This means 6 midi files are created for each single part instrument in each segment.  For a long score with lots of parts - this would take too long and the request would time out...  Therefore, midi files are now created on demand - when the first midi file from a particular segment is requested.</li>
-
             </ul>
         </p>
 

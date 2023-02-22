@@ -77,7 +77,11 @@ class TSScore(object):
         if self.id is None:
             self.id = hashfile(open(src_filepath, 'rb'), hashlib.sha256())
         if self.filename is None:
+            filename = filename.replace(".xml", ".musicxml")
             self.filename = filename
+        else:
+            self.filename = self.filename.replace(".xml", ".musicxml")
+        
         # logger.info("File hash is %s" % file_hash)
 
         data_file_path = self.get_data_file_path()
