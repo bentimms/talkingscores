@@ -81,6 +81,12 @@ class TSScore(object):
         # logger.info("File hash is %s" % file_hash)
 
         data_file_path = self.get_data_file_path()
+        ver = 2
+        while os.path.exists(data_file_path) and ver<10:
+            data_file_path = os.path.join(*(MEDIA_ROOT, self.id, ('ver'+str(ver)+"-"+self.filename) )) # removed slashes in directory structure to make files easier to brwose to
+            ver = ver + 1
+        if (ver>2):
+            self.filename=('ver'+str(ver-1)+"-"+self.filename)
 
         try:
             os.rename(src_filepath, data_file_path)
