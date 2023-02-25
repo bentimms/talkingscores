@@ -721,7 +721,7 @@ class AnalysePart:
             if not dist == "":
                 summary += " (" + dist + ")."
         
-        summary = self.replace_end_with(summary, ", ", ".  ")
+        summary = self.replace_end_with(summary, ", ", ".  ").capitalize()
         return summary
 
     def replace_end_with(self, original:str, remove:str, add:str):
@@ -862,7 +862,7 @@ class AnalysePart:
         repetition += " and " + str(len(self.measure_intervals_analyse_indexes_list)) + " measures have unique intervals...  "
 
         if repetition!="":
-            repetition = "<br/>"+repetition
+            repetition = "<br/>"+repetition.capitalize()
         return repetition
 
     # you get a KeyError if you do dict[key] += value if the key doesn't already exist...
