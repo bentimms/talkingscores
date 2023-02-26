@@ -131,6 +131,13 @@ Click:
                     Repetition - {{repetition_in_contexts[instrument_index][bar]}} 
                     <br/> <br/>
                 {% endif %}
+
+                {% if bar in time_and_keys %}
+                    {% for tk in time_and_keys[bar] %}
+                        {{tk}}<br/>
+                    {% endfor %}
+                    <br/>
+                {% endif %}
                 {#  Loop over each beat pulling out the hand-based dictionaries #}
                 {% for beat, events_per_hand in events_for_beats.items() %}
                     {# {% if not loop.first %}<br/>{% endif %}#}

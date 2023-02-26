@@ -71,8 +71,9 @@ class MusicAnalyser:
     repetition_right_hand = ""
     repetition_left_hand = ""
 
-    def setScore(self, sc):
-        self.score = sc.score
+    def setScore(self, ts):
+        self.ts = ts
+        self.score = ts.score
         part_index = 0
         self.analyse_parts = []
         self.repetition_parts = []
@@ -81,10 +82,10 @@ class MusicAnalyser:
         self.general_summary = ""
 
         analyse_index=0
-        for ins in sc.part_instruments:
-            if ins in sc.selected_instruments:
-                start_part=sc.part_instruments[ins][1]
-                instrument_len=sc.part_instruments[ins][2]
+        for ins in ts.part_instruments:
+            if ins in ts.selected_instruments:
+                start_part=ts.part_instruments[ins][1]
+                instrument_len=ts.part_instruments[ins][2]
                 for part_index in range(start_part, start_part+instrument_len):
                     self.analyse_parts.append(AnalysePart())
                     self.analyse_parts[analyse_index].set_part(self.score.parts[part_index])
@@ -96,9 +97,54 @@ class MusicAnalyser:
                     #self.repetition_parts.append(self.analyse_parts[analyse_index].describe_repetition())
                     analyse_index = analyse_index + 1
         
-        #todo - summarise time / key / tempo changes maybe
+        self.general_summary += self.describe_general_summary()
+
+    # summarise time / key / tempo changes    
+    def describe_general_summary(self):
         num_measures = len(self.score.parts[0].getElementsByClass('Measure'))
-        self.general_summary = "There are " + str(num_measures) + " measures..."
+        generalSummary = ""
+        generalSummary += "There are " + str(num_measures) + " bars...  "
+        
+        timesigs = self.score.parts[0].flat.getElementsByClass('TimeSignature')
+        generalSummary += self.summarise_key_and_time_changes(timesigs, "time signature")
+        keysigs = self.score.parts[0].flat.getElementsByClass('KeySignature')
+        generalSummary += self.summarise_key_and_time_changes(keysigs, "key signature")
+        tempos = self.score.flat.getElementsByClass('MetronomeMark')
+        generalSummary += self.summarise_key_and_time_changes(tempos, "tempo")
+        
+        return generalSummary 
+
+    # if there are only a couple of changes - list them out with their bar number.
+    # if there are more - just say the number
+    def summarise_key_and_time_changes(self, changes_dictionary:dict, changes_name:str):
+        print("summarise key and time changes")
+                    
+        changes = ""
+        numchanges = len(changes_dictionary) - 1 #the first one isn't a change!
+        if numchanges>4:
+            changes = "There are " + str(numchanges) + " " + changes_name + " changes..."
+        elif numchanges>0:
+            changes = "The " + changes_name + " changes to "
+            index = 0
+            for ch in changes_dictionary:
+                if (index>0):
+                    if (changes_name=="time signature"):
+                        changes += self.ts.describe_time_signature(ch)
+                    elif (changes_name=="key signature"):
+                        changes += self.ts.describe_key_signature(ch)
+                    elif (changes_name=="tempo"):
+                        changes += self.ts.describe_tempo(ch)
+                    
+                    changes += " at bar " + str(ch.measureNumber)
+                    if index==numchanges-1:
+                        changes += " and "
+                    elif index<numchanges-1:
+                        changes += ", "
+                index+=1
+
+        if (changes!=""):
+            changes+=".  "
+        return changes
 
 class AnalysePart:
 

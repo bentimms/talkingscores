@@ -269,27 +269,47 @@ class Music21TalkingScore(TalkingScoreBase):
         # Get the first measure of the first part
         m1 = self.score.parts[0].measures(1,1)
         initial_time_signature = m1.getTimeSignatures()[0]
-        return " ".join(initial_time_signature.ratioString.split("/"))
-        # return "4 4"
+        return self.describe_time_signature(initial_time_signature)
+        
+    def describe_time_signature(self, ts):
+        return " ".join(ts.ratioString.split("/"))
+        
 
     def get_initial_key_signature(self):
         m1 = self.score.parts[0].measures(1,1)
         ks = m1.flat.getElementsByClass('KeySignature')[0]
+        return self.describe_key_signature(ks)
+
+    def describe_key_signature(self, ks):
         strKeySig = "No sharps or flats"
         if (ks.sharps>0):
             strKeySig = str(ks.sharps) + " sharps"
         elif (ks.sharps<0):
             strKeySig = str(abs(ks.sharps)) + " flats"
-
         return strKeySig
 
-    def get_initial_tempo(self):
+    # this was used to get the first tempo - but MetronomeMarkBoundary is better
+    def get_initial_text_expression(self):
         # Get the first measure of the first part
         m1 = self.score.parts[0].measures(1,1)
         # Get the text expressions from that measure
         text_expressions = m1.flat.getElementsByClass('TextExpression')
         for te in text_expressions:
             return te.content
+
+    def get_initial_tempo(self):
+        return self.describe_tempo(self.score.metronomeMarkBoundaries()[0][2])
+
+    # the referent is the beat duration ie are you counting crotchets or minims etc
+    def describe_tempo(self, tempo):
+        tempo_text = ""
+        if (tempo.text!=None):
+            tempo_text += tempo.text + " (" + str(math.floor(tempo.number))  + " bpm @ " + str(tempo.referent.type) + ")"
+        else:
+            tempo_text += str(math.floor(tempo.number))  + " bpm @ " + str(tempo.referent.type)
+        print(text)
+        return tempo_text
+        
 
     def get_number_of_bars(self):
         return len(self.score.parts[0].getElementsByClass('Measure'))
@@ -397,7 +417,7 @@ class Music21TalkingScore(TalkingScoreBase):
         # using collect=('TimeSignature') is slow.  It is almost twice as fast to use a dictionary of time signatures and insert at the start of each segment.
         measures = self.score.parts[part_index].measures(start_bar, end_bar)
         if len(measures.measure(start_bar).getElementsByClass(meter.TimeSignature))==0:
-            measures.measure(start_bar).insert(0, self.timeSigs[start_bar])
+            measures.measure(start_bar).insert(0, self.timeSigs[start_bar][0])
 
         print("\n\nProcessing part %s, bars %s to %s" % (part_index, start_bar, end_bar))
         
@@ -791,6 +811,7 @@ class HTMLTalkingScoreFormatter():
                                 'play_all' : settings['playAll'],
                                 'play_selected' : settings['playSelected'],
                                 'play_unselected' : settings['playUnselected'],
+                                'time_and_keys' : self.time_and_keys,
                                 'parts_summary' : self.music_analyser.summary_parts,
                                 'general_summary' : self.music_analyser.general_summary,
                                 'repetition_in_contexts' : self.music_analyser.repetition_in_contexts,
@@ -826,14 +847,25 @@ class HTMLTalkingScoreFormatter():
         number_of_bars = self.score.get_number_of_bars()
         
         t1s = time.time()
+        self.time_and_keys = {} # index is bar number, key = "Time sig x of y - 4 4..."
+        total = len(self.score.score.parts[0].flat.getElementsByClass('TimeSignature'))
+        for count, ts in enumerate(self.score.score.parts[0].flat.getElementsByClass('TimeSignature')):
+            description = "Time signature - " + str(count+1) + " of " + str(total) + " is " + self.score.describe_time_signature(ts) + ".  "
+            self.time_and_keys.setdefault(ts.measureNumber, []).append(description)
+
+        total = len(self.score.score.parts[0].flat.getElementsByClass('KeySignature'))
+        for count, ks in enumerate(self.score.score.parts[0].flat.getElementsByClass('KeySignature')):
+            description = "Key signature - " + str(count+1) + " of " + str(total) + " is " + self.score.describe_key_signature(ks) + ".  "
+            self.time_and_keys.setdefault(ks.measureNumber, []).append(description)
         
-        self.score.timeSigs = {}
+        self.score.timeSigs = {} # key=bar number.  Value = timeSig   
         previous_ts = self.score.score.parts[0].getElementsByClass('Measure')[0].getElementsByClass(meter.TimeSignature)[0]
         
         #pickup bar
         if self.score.score.parts[0].getElementsByClass('Measure')[0].number != self.score.score.parts[0].measures(1,2).getElementsByClass('Measure')[0].number:
             previous_ts = self.score.score.parts[0].getElementsByClass('Measure')[0].getElementsByClass(meter.TimeSignature)[0]
             self.score.timeSigs[0] = previous_ts
+            time_sig_index+=1
             #todo - where should spanners and dynamics etc go?
             selected_instruments_descriptions = {} # key = instrument index, {[part descriptions]} 
             
@@ -859,7 +891,7 @@ class HTMLTalkingScoreFormatter():
                 if len(self.score.score.parts[0].measure(bar_index).getElementsByClass(meter.TimeSignature))>0:
                     previous_ts = self.score.score.parts[0].measure(bar_index).getElementsByClass(meter.TimeSignature)[0]
                 self.score.timeSigs[checkts] = previous_ts
-
+                
             # for offset, events in events_for_bar_range.iteritems():
             # events_ordered_by_beat = OrderedDict(sorted(events_for_bar_range.items(), key=lambda t: t[0]))
 
@@ -883,8 +915,6 @@ class HTMLTalkingScoreFormatter():
         logger.info("End of get_music_segments")
         t1e = time.time()
         print("described parts etc = " + str(t1e-t1s))
-        print ("time sigs measure dictionary = ")
-        print(self.score.timeSigs)
         return music_segments
 
 
