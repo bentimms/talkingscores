@@ -167,7 +167,7 @@ class MidiHandler:
                                 self.insert_click_track(s, click)
                                 s.write('midi', self.make_midi_path_from_options(start=start, end=end, part=pi, tempo=tempo, click=click)) 
                                 
-
+    # If there is a pickup bar - add rests to the start - so the click track can start on beat 1
     def insert_click_track(self, s, click):
         if click == 'n':
             return
@@ -194,11 +194,13 @@ class MidiHandler:
             clickNote.duration = ts.getBeatDuration(0) # specify beat number for complex time signatures...
             clickmeasure.append(clickNote)
             beatpos = ts.getBeatDuration(0).quarterLength
-            if (m.duration.quarterLength < ts.barDuration.quarterLength):
+            # if it is a pickup bar then add rests to bar 0 and shift the start offset of the future bars
+            #todo - slight cludge for if the bar doesn't have anything in it (no notes or rests) - possibly should add in the rests at the start of processing
+            if (m.duration.quarterLength < ts.barDuration.quarterLength and len(m.getElementsByClass(['Note', 'Rest']))>0): 
                 rest_duration = ts.barDuration.quarterLength - m.duration.quarterLength
                 r = note.Rest()
                 r.duration.quarterLength = rest_duration
-                print("pikcup bar - rest_duration = " + str(rest_duration))
+                print("pickup bar - rest_duration = " + str(rest_duration))
                 for p in self.scoreSegment.parts: #change the bar start offset for all future streams.  Add a rest in all streams (including this one)
                     r = note.Rest()
                     r.duration.quarterLength = rest_duration
@@ -239,9 +241,9 @@ class MidiHandler:
                 return           
             if (mmb[1]>offset_start): # if mmb ends during the segment
                 if (mmb[0])<=offset_start: # starts before segment so insert it at the start of the stream
-                    stream.insert(0, tempo.MetronomeMark( number=mmb[2].number*scale ))
+                    stream.insert(0, tempo.MetronomeMark( number=mmb[2].number*scale, referent=mmb[2].referent))
                 else: # starts during segment so insert it part way through the stream
-                    stream.insert(mmb[0]-offset_start + self.tempo_shift, tempo.MetronomeMark(number=mmb[2].number*scale))
+                    stream.insert(mmb[0]-offset_start + self.tempo_shift, tempo.MetronomeMark(number=mmb[2].number*scale, referent=mmb[2].referent))
 
     def make_midi_path_from_options(self, sel=None, part=None, ins=None, start=None, end=None, click=None, tempo=None):
         self.midiname = self.filename

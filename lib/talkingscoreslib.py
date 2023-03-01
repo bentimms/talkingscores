@@ -298,18 +298,35 @@ class Music21TalkingScore(TalkingScoreBase):
             return te.content
 
     def get_initial_tempo(self):
+        global settings
+        try: settings
+        except NameError: settings = None
+        if settings == None:
+            settings={}
+            settings['dotPosition']="before"
+            settings['rhythmDescription']="british"
         return self.describe_tempo(self.score.metronomeMarkBoundaries()[0][2])
 
-    # the referent is the beat duration ie are you counting crotchets or minims etc
     def describe_tempo(self, tempo):
         tempo_text = ""
         if (tempo.text!=None):
-            tempo_text += tempo.text + " (" + str(math.floor(tempo.number))  + " bpm @ " + str(tempo.referent.type) + ")"
+            tempo_text += tempo.text + " (" + str(math.floor(tempo.number))  + " bpm @ " + self.describe_tempo_referent(tempo) + ")"
         else:
-            tempo_text += str(math.floor(tempo.number))  + " bpm @ " + str(tempo.referent.type)
+            tempo_text += str(math.floor(tempo.number))  + " bpm @ " + self.describe_tempo_referent(tempo)
         print(text)
         return tempo_text
+
+    # the referent is the beat duration ie are you counting crotchets or minims etc
+    def describe_tempo_referent(self, tempo):
+        global settings
+        tempo_text=""
+        if settings['dotPosition']=="before":
+            tempo_text = self._DOTS_MAP.get(tempo.referent.dots)
+        tempo_text += self.map_duration(tempo.referent)
+        if settings['dotPosition']=="after":
+            tempo_text += " " + self._DOTS_MAP.get(tempo.referent.dots)
         
+        return tempo_text   
 
     def get_number_of_bars(self):
         return len(self.score.parts[0].getElementsByClass('Measure'))
@@ -417,7 +434,7 @@ class Music21TalkingScore(TalkingScoreBase):
         # using collect=('TimeSignature') is slow.  It is almost twice as fast to use a dictionary of time signatures and insert at the start of each segment.
         measures = self.score.parts[part_index].measures(start_bar, end_bar)
         if len(measures.measure(start_bar).getElementsByClass(meter.TimeSignature))==0:
-            measures.measure(start_bar).insert(0, self.timeSigs[start_bar][0])
+            measures.measure(start_bar).insert(0, self.timeSigs[start_bar])
 
         print("\n\nProcessing part %s, bars %s to %s" % (part_index, start_bar, end_bar))
         
