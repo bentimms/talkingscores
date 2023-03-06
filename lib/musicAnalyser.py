@@ -940,7 +940,7 @@ class AnalysePart:
             for index, usage in enumerate(group):
                 if index>=1:
                     temp = repeat_what + str(usage[0]) + and_or_through + str(usage[1]) 
-                    temp += " were first used " + str(group[0][0])
+                    temp += " were first used at " + str(group[0][0])
                     if index>=2:
                         temp += " and lately used at " + str(group[index-1][0])
                 else:

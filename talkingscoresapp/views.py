@@ -109,6 +109,7 @@ def midi(request, id, filename):
     midiname = mh.get_or_make_midi_file()
     fr = FileResponse(open(BASE_DIR+"/staticfiles/data/" + id + "/" + midiname, "rb"))
     fr['Access-Control-Allow-Origin'] = '*'
+    fr['X-Robots-Tag'] = "noindex"
     return fr
 
 # View for a particular score
