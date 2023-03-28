@@ -238,10 +238,11 @@ class MidiHandler:
     def insert_tempos(self, stream, offset_start, scale):       
         for mmb in self.score.metronomeMarkBoundaries():
             if (mmb[0]>=offset_start+stream.duration.quarterLength): # ignore tempos that start after stream ends
-                return           
+                return        
             if (mmb[1]>offset_start): # if mmb ends during the segment
                 if (mmb[0])<=offset_start: # starts before segment so insert it at the start of the stream
-                    stream.insert(0, tempo.MetronomeMark( number=mmb[2].number*scale, referent=mmb[2].referent))
+                    #if there is a tempo already in the stream at offset 0 and we insert a different tempo - it seems to happen just before the original tempo so is ignored...
+                    stream.insert(0.001, tempo.MetronomeMark( number=mmb[2].number*scale, referent=mmb[2].referent))
                 else: # starts during segment so insert it part way through the stream
                     stream.insert(mmb[0]-offset_start + self.tempo_shift, tempo.MetronomeMark(number=mmb[2].number*scale, referent=mmb[2].referent))
 
