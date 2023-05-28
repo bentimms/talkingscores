@@ -139,12 +139,12 @@ Click:
                     <br/>
                 {% endif %}
                 {#  Loop over each beat pulling out the hand-based dictionaries #}
-                {% for beat, events_per_hand in events_for_beats.items() %}
+                {% for beat, events_per_beat in events_for_beats.items() %}
                     {# {% if not loop.first %}<br/>{% endif %}#}
                     <div>Beat {{ beat }}:
                     {% set previous_event = {'value' : None} %}
                     {#  Loop over each hand #}
-                    {% for voice, events_per_voice in events_per_hand|dictsort|reverse %}
+                    {% for voice, events_per_voice in events_per_beat|dictsort %}
                         {% if not loop.first %} together with {% endif %}
                         {% for pitch_space, events in events_per_voice.items() %}
                             {% if not loop.first %}, {% endif %}
