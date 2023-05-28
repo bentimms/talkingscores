@@ -882,7 +882,6 @@ class HTMLTalkingScoreFormatter():
         if self.score.score.parts[0].getElementsByClass('Measure')[0].number != self.score.score.parts[0].measures(1,2).getElementsByClass('Measure')[0].number:
             previous_ts = self.score.score.parts[0].getElementsByClass('Measure')[0].getElementsByClass(meter.TimeSignature)[0]
             self.score.timeSigs[0] = previous_ts
-            time_sig_index+=1
             #todo - where should spanners and dynamics etc go?
             selected_instruments_descriptions = {} # key = instrument index, {[part descriptions]} 
             
@@ -904,8 +903,19 @@ class HTMLTalkingScoreFormatter():
             end_bar_index = bar_index + settings['barsAtATime'] - 1
             if end_bar_index > number_of_bars:
                 end_bar_index = number_of_bars
+                
+            #cludge to not have None bars - but will actually ignore some...
+            #todo - we get the number of bars just by the length and use that as the maximum bar number.  However- sometimes bars are called "X1" for half bars next to a repeat.  Or Finale re-uses bar numbers for sections - so need a better way of getting each bar...
+            if (self.score.score.parts[0].measure(bar_index) == None):
+                print("start bar is none...")
+                break
+            while (end_bar_index>=1 and self.score.score.parts[0].measure(end_bar_index+1) == None):
+                end_bar_index = end_bar_index -1
+                print("end bar index was too big - now " + str(end_bar_index))
             for checkts in range(bar_index, end_bar_index+1):
-                if len(self.score.score.parts[0].measure(bar_index).getElementsByClass(meter.TimeSignature))>0:
+                if (self.score.score.parts[0].measure(bar_index) == None):
+                    print ("bar " + str(bar_index) + " is None...")
+                elif len(self.score.score.parts[0].measure(bar_index).getElementsByClass(meter.TimeSignature))>0:
                     previous_ts = self.score.score.parts[0].measure(bar_index).getElementsByClass(meter.TimeSignature)[0]
                 self.score.timeSigs[checkts] = previous_ts
                 
