@@ -22,6 +22,8 @@ global settings
 
 class TSEvent(object, metaclass=ABCMeta):
     duration = None
+    tuplets = ""
+    endTuplets = ""
     beat = None
     bar = None
     part = None
@@ -51,12 +53,14 @@ class TSEvent(object, metaclass=ABCMeta):
 
     def render(self, context=None, noteLetter=None):
         rendered_elements = []
-        if (context is None or context.duration != self.duration or settings['rhythmAnnouncement']=="everyNote") and self.duration:
+        if (context is None or context.duration != self.duration or self.tuplets!="" or settings['rhythmAnnouncement']=="everyNote"):
+            rendered_elements.append(self.tuplets)
             if (noteLetter!=None):
                 rendered_elements.append(self.render_colourful_output(self.duration, noteLetter, "rhythm"))
             else:
                 rendered_elements.append(self.duration)
-
+        rendered_elements.append(self.endTuplets)
+                
         if self.tie:
             rendered_elements.append("tie %s" % self.tie)
         return rendered_elements
@@ -433,7 +437,7 @@ class Music21TalkingScore(TalkingScoreBase):
         
         # using collect=('TimeSignature') is slow.  It is almost twice as fast to use a dictionary of time signatures and insert at the start of each segment.
         measures = self.score.parts[part_index].measures(start_bar, end_bar)
-        if len(measures.measure(start_bar).getElementsByClass(meter.TimeSignature))==0:
+        if measures.measure(start_bar)!=None and len(measures.measure(start_bar).getElementsByClass(meter.TimeSignature))==0:
             measures.measure(start_bar).insert(0, self.timeSigs[start_bar])
 
         print("\n\nProcessing part %s, bars %s to %s" % (part_index, start_bar, end_bar))
@@ -524,8 +528,17 @@ class Music21TalkingScore(TalkingScoreBase):
             # This test isn't WORKING
             # if TSEvent.__class__ in event.__class__.__bases__:
             event.duration = ""
+            if (len(element.duration.tuplets)>0):
+                if (element.duration.tuplets[0].type=="start"):
+                    if (element.duration.tuplets[0].fullName=="Triplet"):
+                        event.tuplets = "triplets "
+                    else:
+                        event.tuplets = element.duration.tuplets[0].fullName + " (" + str(element.duration.tuplets[0].tupletActual[0]) + " in " + str(element.duration.tuplets[0].tupletNormal[0]) + ") "
+                elif (element.duration.tuplets[0].type=="stop" and element.duration.tuplets[0].fullName!="Triplet"):
+                    event.endTuplets = "end tuplet " 
+
             if settings['dotPosition']=="before":
-                event.duration = self.map_dots(element.duration.dots)
+                event.duration += self.map_dots(element.duration.dots)
             event.duration += self.map_duration(element.duration)
             if settings['dotPosition']=="after":
                 event.duration += " " + self.map_dots(element.duration.dots)

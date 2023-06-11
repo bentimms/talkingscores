@@ -145,7 +145,7 @@ Click:
                     {% set previous_event = {'value' : None} %}
                     {#  Loop over each hand #}
                     {% for voice, events_per_voice in events_per_beat|dictsort %}
-                        {% if not loop.first %} together with {% endif %}
+                        {% if not loop.first %} - together with {% endif %}
                         {% for pitch_space, events in events_per_voice.items() %}
                             {% if not loop.first %}, {% endif %}
                             {#  Loop over the events  #}
