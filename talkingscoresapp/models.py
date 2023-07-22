@@ -10,6 +10,8 @@ from urllib.parse import urlparse
 from urllib.request import url2pathname
 import tempfile
 from talkingscoreslib import Music21TalkingScore, HTMLTalkingScoreFormatter
+#the musicxml file is saved with its original filename - so needs to be sanitized.  Also, we remove apostrophes 
+from pathvalidate import sanitize_filename
 
 log_format = "%(asctime)s - %(levelname)s - %(message)s"
 logging.basicConfig(filename=os.path.join(*(MEDIA_ROOT, "log1.txt")), format=log_format)
@@ -161,8 +163,9 @@ class TSScore(object):
             logger.exception("Unparsable file: %s" % temporary_file.name + " --- " + str(ex))
             raise ex;
 
-        score = TSScore(filename=os.path.basename(uploaded_file.name))
+        score = TSScore(filename=os.path.basename(sanitize_filename(uploaded_file.name.replace("'", "").replace("\"", ""))))
         score.store(temporary_file.name, score.filename)
+        
         return score
 
     @classmethod
@@ -171,6 +174,6 @@ class TSScore(object):
         parsed_url = urlparse(url)
         score = TSScore(url=url)
         score_temp_filepath = score.fetch()
-        score_filename = url2pathname(os.path.basename(parsed_url.path))
+        score_filename = url2pathname(os.path.basename(sanitize_filename(parsed_url.path.name.replace("'", "").replace("\"", "")) ))
         score.store(score_temp_filepath, score_filename)
         return score
