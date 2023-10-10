@@ -281,7 +281,10 @@ class Music21TalkingScore(TalkingScoreBase):
 
     def get_initial_key_signature(self):
         m1 = self.score.parts[0].measures(1,1)
-        ks = m1.flat.getElementsByClass('KeySignature')[0]
+        if len(m1.flat.getElementsByClass('KeySignature'))==0:
+            ks = key.KeySignature(0)
+        else:
+            ks = m1.flat.getElementsByClass('KeySignature')[0]
         return self.describe_key_signature(ks)
 
     def describe_key_signature(self, ks):
