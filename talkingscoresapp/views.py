@@ -59,19 +59,20 @@ class NotifyEmailForm(forms.Form):
 
 
 def send_error_email(error_message):
-    msg = MIMEMultipart()
     
-    password = os.environ['EMAIL_PASSWORD'] # in pythonanywhere this can be set in wsgi.py
-    msg['From'] = "talkingscores@gmail.com"
-    msg['To'] = "talkingscores@gmail.com"
-    msg['Subject'] = "Talking Scores Error"
+    if ('EMAIL_PASSWORD' in os.environ): #dont try do send an email from development environment
+        msg = MIMEMultipart()
+        password = os.environ['EMAIL_PASSWORD'] # in pythonanywhere this can be set in wsgi.py
+        msg['From'] = "talkingscores@gmail.com"
+        msg['To'] = "talkingscores@gmail.com"
+        msg['Subject'] = "Talking Scores Error"
 
-    msg.attach(MIMEText(error_message, 'plain'))
-    server = smtplib.SMTP('smtp.gmail.com: 587')
-    server.starttls()
-    server.login(msg['From'], password)
-    server.sendmail(msg['From'], msg['To'], msg.as_string())
-    server.quit()
+        msg.attach(MIMEText(error_message, 'plain'))
+        server = smtplib.SMTP('smtp.gmail.com: 587')
+        server.starttls()
+        server.login(msg['From'], password)
+        server.sendmail(msg['From'], msg['To'], msg.as_string())
+        server.quit()
 
 def process(request, id, filename):
     template = loader.get_template('processing.html')
@@ -129,6 +130,9 @@ def error(request, id, filename):
             logger.warn(str(form.errors))
     else:
         form = NotifyEmailForm()
+        send_error_email(
+            "Exception processing score http://%s%s " % (
+            request.get_host(), reverse('score', args=[id, filename]) ))
 
     context = {'id': id, 'filename': filename, 'form': form}
     return HttpResponse(template.render(context, request))
@@ -155,11 +159,16 @@ def privacy_policy(request):
 
 # View for the a particular score
 def options(request, id, filename):
-    score = TSScore(id=id, filename=filename)
-    data_path = score.get_data_file_path()
-    options_path = data_path + '.opts'
-    logger.info("Reading score %s" % data_path)
-    score_info = score.info()
+    try:
+        score = TSScore(id=id, filename=filename)
+        data_path = score.get_data_file_path()
+        options_path = data_path + '.opts'
+        logger.info("Reading score %s" % data_path)
+        score_info = score.info()
+    except:
+        logger.exception("Unable to process score (before options screen!):  http://%s%s " % (request.get_host(), reverse('score', args=[id, filename])))
+        return redirect('error', id, filename)
+            
 
     if request.method == 'POST':
         form = TalkingScoreGenerationOptionsForm(request.POST)
