@@ -202,7 +202,7 @@ def options(request, id, filename):
             logger.warn("Invalid form..." + str(form.errors))
             print ( str(form.errors))
             if form.cleaned_data["instruments"]=='':
-                form.add_error("instruments", "Please select at least instrument to describe...")
+                form.add_error("instruments", "Please select at least one instrument to describe...")
             
     else:
         form = TalkingScoreGenerationOptionsForm()
