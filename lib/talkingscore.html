@@ -5,7 +5,6 @@
     <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
     <meta name="robots" content="noindex" />
     
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <!-- midi.js package -->
     <script type='text/javascript' src='//www.midijs.net/lib/midi.js'></script> 
 {#   <!-- extras -->#}
@@ -190,45 +189,51 @@ Click:
 {#</script>#}
 
 <script>
-    $(document).ready(function() {
-        $(".ddlTempo").on('change', function (event) {
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-            let tempo = this.value
-            let click = $("#ddlClick").val()
-            $('.lnkPlay').each(function(i, obj) {
-                let href=$(this).attr('onClick');
-                let posTempo = href.indexOf('&t=')
-                href = href.substr(0,posTempo)
-                $(this).attr('onClick', href +"&t="+ tempo + "&c=" + click + "&bsi={{binary_selected_instruments}}&bpi={{binary_play_all}}'); return false;") 
-            });
+    document.addEventListener("DOMContentLoaded", (event) => {
+        document.querySelectorAll('.ddlTempo').forEach((ddlTempo) => {
+            ddlTempo.addEventListener("change", function(event) {
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                let tempo = ddlTempo.value;
+                let ddlClick = document.querySelector("#ddlClick") 
+                let click = ddlClick.value;
+                
+                document.querySelectorAll('.lnkPlay').forEach((lnkPlay) => {
+                    let href = lnkPlay.getAttribute("onClick")
+                    let posTempo = href.indexOf("&t=")
+                    href = href.substr(0,posTempo)
+                    lnkPlay.setAttribute('onClick', href +"&t="+ tempo + "&c=" + click + "&bsi={{binary_selected_instruments}}&bpi={{binary_play_all}}'); return false;") 
+                })
+                
+                document.querySelectorAll('.ddlTempo').forEach((ddlTempo2) => {
+                    ddlTempo2.value = ddlTempo.value
+                })
+            })
+        }) 
 
-            $('.ddlTempo').each(function(ddlIndex, ddlObj) {
-                ddlObj.value=tempo
-            });
+        //click drop downs
+        document.querySelectorAll('.ddlClick').forEach((ddlClick) => {
+            ddlClick.addEventListener("change", function(event) {
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                let click = ddlClick.value;
+                let ddlTempo = document.querySelector("#ddlTempo") 
+                let tempo = ddlTempo.value;
+                
+                document.querySelectorAll('.lnkPlay').forEach((lnkPlay) => {
+                    let href = lnkPlay.getAttribute("onClick")
+                    let posTempo = href.indexOf("&t=")
+                    href = href.substr(0,posTempo)
+                    lnkPlay.setAttribute('onClick', href +"&t="+ tempo + "&c=" + click + "&bsi={{binary_selected_instruments}}&bpi={{binary_play_all}}'); return false;") 
+                })
+                
+                document.querySelectorAll('.ddlClick').forEach((ddlClick2) => {
+                    ddlClick2.value = ddlClick.value
+                })
+            })
+        }) 
+    })
 
-        });
-    });
-
-    $(document).ready(function() {
-        $(".ddlClick").on('change', function (event) {
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-            let click = this.value
-            let tempo = $("#ddlTempo").val()
-            $('.lnkPlay').each(function(i, obj) {
-                let href=$(this).attr('onClick');
-                let posTempo = href.indexOf('&t=')
-                href = href.substr(0,posTempo)
-                $(this).attr('onClick', href +"&t="+ tempo + "&c=" + click + "&bsi={{binary_selected_instruments}}&bpi={{binary_play_all}}'); return false;") 
-            });
-
-            $('.ddlClick').each(function(ddlIndex, ddlObj) {
-                ddlObj.value=click
-            });
-
-        });
-    });
 </script>
 </body>
 </html>
