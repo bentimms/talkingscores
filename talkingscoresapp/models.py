@@ -13,9 +13,18 @@ from talkingscoreslib import Music21TalkingScore, HTMLTalkingScoreFormatter
 #the musicxml file is saved with its original filename - so needs to be sanitized.  Also, we remove apostrophes 
 from pathvalidate import sanitize_filename
 
-log_format = "%(asctime)s - %(levelname)s - %(message)s"
-logging.basicConfig(filename=os.path.join(*(MEDIA_ROOT, "log1.txt")), format=log_format)
 logger = logging.getLogger("TSScore")
+logger.setLevel(logging.DEBUG) #set the minimum level for the logger to the level of the lowest handler or some events could be missed!
+console_handler = logging.StreamHandler()
+file_handler = logging.FileHandler(os.path.join(*(MEDIA_ROOT, "log1.txt")))
+console_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(logging.INFO)
+console_format = logging.Formatter("Ln %(lineno)d - %(message)s")
+file_format = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+console_handler.setFormatter(console_format)
+file_handler.setFormatter(file_format)
+logger.addHandler(console_handler)
+logger.addHandler(file_handler)
     
 
 def hashfile(afile, hasher, blocksize=65536):
@@ -36,7 +45,6 @@ class TSScore(object):
     
     # I can't seem to find a way of getting the class object in scope at this point to dynamically populate the name
     logger = logging.getLogger("TSScore")
-    logger.level = logging.DEBUG
     def __init__(self, id=None, initial_state=TSScoreState.IDLE, url=None, filename=None):
         self._state = initial_state
         self.url   = url
@@ -122,7 +130,7 @@ class TSScore(object):
             return
 
         temporary_file = tempfile.NamedTemporaryFile(delete=False,dir=os.path.join(BASE_DIR,'tmp'))
-        self.logger.debug("Temporary file: %s" % temporary_file.name)
+        self.logger.info("Temporary file: %s" % temporary_file.name)
         r = requests.get(self.url, stream=True)
         for chunk in r.iter_content(chunk_size=1024):
             if chunk:

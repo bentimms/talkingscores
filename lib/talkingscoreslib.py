@@ -370,7 +370,7 @@ class Music21TalkingScore(TalkingScoreBase):
                 else:
                     self.part_names[c] = "Part " + str(self.part_instruments[ins_count-1][2])
 
-        print("part_instruments = " + str(self.part_instruments))
+        logger.debug(f"part instruments = {self.part_instruments}")
         print("part names = " + str(self.part_names))
         print("instrument names = " + str(instrument_names))
         return instrument_names 
@@ -443,8 +443,7 @@ class Music21TalkingScore(TalkingScoreBase):
         if measures.measure(start_bar)!=None and len(measures.measure(start_bar).getElementsByClass(meter.TimeSignature))==0:
             measures.measure(start_bar).insert(0, self.timeSigs[start_bar])
 
-        print("\n\nProcessing part %s, bars %s to %s" % (part_index, start_bar, end_bar))
-        
+        logger.info(f'Processing part - {part_index} - bars {start_bar} to {end_bar}')
         # Iterate over the bars one at a time
         # pickup bar has to request measures 0 to 1 above otherwise it returns an measures just has empty parts - so now restrict it just to bar 0...
         if start_bar==0 and end_bar==1:
