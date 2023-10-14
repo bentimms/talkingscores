@@ -3,7 +3,6 @@ __author__ = 'PMarchant'
 import os
 import json
 import math
-import pprint
 import logging, logging.handlers, logging.config
 from tracemalloc import BaseFilter
 from music21 import *
@@ -22,14 +21,14 @@ class MidiHandler:
         bsi = int(self.queryString.get("bsi"))
         self.selected_instruments = []
         while (bsi>1):
-            print ("bsi = " + str(bsi))
+            logger.debug(f"bsi = {bsi}")
             if (bsi&1==True):
                 self.selected_instruments.append(True)
             else:
                 self.selected_instruments.append(False)
             bsi=bsi>>1
         self.selected_instruments.reverse()
-        print(self.selected_instruments)
+        logger.debug(f"selected_instruments = {self.selected_instruments}")
 
         self.all_selected_parts = []
         self.all_unselected_parts = []
@@ -38,8 +37,8 @@ class MidiHandler:
         instrument_index=-1
         prev_instrument=""
         for part_index, part in enumerate(self.score.flat.getInstruments()):
-            print ("part_index = " + str(part_index) )
-            print (part)
+            logger.debug(f"part_index = {part_index}" )
+            logger.debug(part)
             if part.partId!=prev_instrument:
                 instrument_index+=1
                 self.selected_instruement_parts.get(instrument_index)
@@ -56,13 +55,10 @@ class MidiHandler:
 
             prev_instrument=part.partId
 
-        print("all_selected_parts = ")
-        print(self.all_selected_parts)
-        print("all_unselected_parts = ")
-        print(self.all_unselected_parts)
-        print("selected_instruement_parts = ")
-        print(self.selected_instruement_parts)
-
+        logger.debug(f"all_selected_parts = {self.all_selected_parts}")
+        logger.debug(f"all_unselected_parts = {self.all_unselected_parts}")
+        logger.debug(f"selected_instruement_parts = {self.selected_instruement_parts}")
+        
         #play together - all / selected / unselected instruments
         bpi = int(self.queryString.get("bpi"))
         self.play_together_unselected = bpi&1
@@ -74,7 +70,7 @@ class MidiHandler:
         
         
         while (bsi>1):
-            print ("bsi = " + str(bsi))
+            logger.debug (f"bsi = {bsi}")
             if (bsi&1==True):
                 self.selected_instruments.append(True)
             else:
@@ -172,7 +168,7 @@ class MidiHandler:
         if click == 'n':
             return
         
-        print("adding click track")
+        logger.debug("adding click track")
         #todo - use eg instrument.HiHatCymbal() etc after updating music21
         clicktrack = stream.Stream()
         #ins = instrument.Woodblock() # workds d#1 and d#5 ok ish.  beat 1 is too quiet
@@ -200,7 +196,7 @@ class MidiHandler:
                 rest_duration = ts.barDuration.quarterLength - m.duration.quarterLength
                 r = note.Rest()
                 r.duration.quarterLength = rest_duration
-                print("pickup bar - rest_duration = " + str(rest_duration))
+                logger.debug(f"pickup bar - rest_duration = {rest_duration}")
                 for p in self.scoreSegment.parts: #change the bar start offset for all future streams.  Add a rest in all streams (including this one)
                     r = note.Rest()
                     r.duration.quarterLength = rest_duration
@@ -208,7 +204,7 @@ class MidiHandler:
                     for ms in p.getElementsByClass(stream.Measure)[1:]:
                         ms.offset+=rest_duration
                     
-                    print("now added rest to parts - duration = " + str(rest_duration) + " and measure 0 duration = " + str(p.getElementsByClass(stream.Measure)[0].duration.quarterLength))
+                    logger.debug(f"now added rest to parts - duration = {rest_duration} and measure 0 duration = {p.getElementsByClass(stream.Measure)[0].duration.quarterLength}")
                 for p in s.parts: # change the bar start offsets for this stream
                     for ms in p.getElementsByClass(stream.Measure)[1:]:
                         ms.offset+=rest_duration
@@ -264,7 +260,7 @@ class MidiHandler:
             self.midiname+="t"+str(tempo)
         
         self.midiname+=".mid"
-        print("midifilename = " + self.midiname)
+        logger.debug(f"midifilename = {self.midiname}")
         return os.path.join(BASE_DIR, STATIC_ROOT, "data", self.folder, "%s" % ( self.midiname ) )
         
 
@@ -289,7 +285,7 @@ class MidiHandler:
         toReturn = self.midiname
         midi_filepath = os.path.join(BASE_DIR, STATIC_ROOT, "data", self.folder, "%s" % ( self.midiname ) )
         if not os.path.exists(midi_filepath):
-            print("midi file not found - " + self.midiname + " - making it...")
+            logger.debug(f"midi file not found - {self.midiname} - making it...")
             self.make_midi_files()
         
         return toReturn
