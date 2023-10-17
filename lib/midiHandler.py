@@ -260,7 +260,7 @@ class MidiHandler:
 
         self.midiname += ".mid"
         logger.debug(f"midifilename = {self.midiname}")
-        return os.path.join(BASE_DIR, STATIC_ROOT, "data", self.folder, "%s" % (self.midiname))
+        return os.path.join(BASE_DIR, STATIC_ROOT, "data", self.folder, self.midiname)
 
     def get_or_make_midi_file(self):
         self.midiname = self.filename
