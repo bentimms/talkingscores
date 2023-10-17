@@ -65,7 +65,7 @@ class TSEvent(object, metaclass=ABCMeta):
         rendered_elements.append(self.endTuplets)
 
         if self.tie:
-            rendered_elements.append("tie %s" % self.tie)
+            rendered_elements.append(f"tie {self.tie}")
         return rendered_elements
 
 
@@ -173,7 +173,7 @@ class TSChord(TSEvent):
         return ''
 
     def render(self, context=None):
-        rendered_elements = ['%s-note chord' % len(self.pitches)]
+        rendered_elements = [f'{len(self.pitches)}-note chord']
         rendered_elements.append(' '.join(super(TSChord, self).render(context)))
         previous_pitch = None
         for pitch in sorted(self.pitches, key=lambda TSPitch: TSPitch.pitch_number):
@@ -481,7 +481,7 @@ class Music21TalkingScore(TalkingScoreBase):
                 voice = 1
 
                 if first.measureNumber >= start_bar and first.measureNumber <= end_bar:
-                    event = TSDynamic(long_name='%s start' % spanner_type)
+                    event = TSDynamic(long_name=f'{spanner_type} start')
                     events_by_bar\
                         .setdefault(first.measureNumber, {})\
                         .setdefault(first.beat, {})\
@@ -490,7 +490,7 @@ class Music21TalkingScore(TalkingScoreBase):
                         .append(event)
 
                 if last.measureNumber >= start_bar and last.measureNumber <= end_bar:
-                    event = TSDynamic(long_name='%s end' % spanner_type)
+                    event = TSDynamic(long_name=f'{spanner_type} end')
                     # todo -  Note - THIS WILL NOT HANDLE CRESCENDOS/DIMINUENDOS THAT SPAN MEASURES
                     events_by_bar\
                         .setdefault(last.measureNumber, {})\
@@ -576,13 +576,12 @@ class Music21TalkingScore(TalkingScoreBase):
         return chord_pitches_by_octave
 
     # for all / selected / unselected
-
     def generate_midi_filename_sel(self, prefix, range_start=None, range_end=None, output_path="", sel=""):
         base_filename = os.path.splitext(os.path.basename(self.filepath))[0]
         if (range_start != None):
-            midi_filename = os.path.join(output_path, ("%s.mid?sel=%s&start=%d&end=%d&t=100&c=n" % (base_filename, sel, range_start, range_end)))
+            midi_filename = os.path.join(output_path, f"{base_filename}.mid?sel={sel}&start={range_start}&end={range_end}&t=100&c=n")
         else:
-            midi_filename = os.path.join(output_path, ("%s.mid?sel=%s&t=100&c=n" % (base_filename, sel,)))
+            midi_filename = os.path.join(output_path, f"{base_filename}.mid?sel={sel}&t=100&c=n")
         return (prefix+os.path.basename(midi_filename))
 
     def generate_part_descriptions(self, instrument, start_bar, end_bar):
@@ -599,21 +598,21 @@ class Music21TalkingScore(TalkingScoreBase):
                 for pi in range(self.part_instruments[ins][1], self.part_instruments[ins][1]+self.part_instruments[ins][2]):
                     if self.part_instruments[ins][2] > 1:
                         base_filename = os.path.splitext(os.path.basename(self.filepath))[0]
-                        midi_filename = os.path.join(output_path, "%s.mid?part=%d&t=100&c=n" % (base_filename, pi))
+                        midi_filename = os.path.join(output_path, f"{base_filename}.mid?part={pi}&t=100&c=n")
                         part_midis.append(midi_filename)
         else:  # specific measures
             for ins in add_instruments:
                 for pi in range(self.part_instruments[ins][1], self.part_instruments[ins][1]+self.part_instruments[ins][2]):
                     if self.part_instruments[ins][2] > 1:
                         base_filename = os.path.splitext(os.path.basename(self.filepath))[0]
-                        midi_filename = os.path.join(output_path, "%s.mid?part=%d&start=%d&end=%d&t=100&c=n" % (base_filename, pi, range_start, range_end))
+                        midi_filename = os.path.join(output_path, f"{base_filename}.mid?part={pi}&start={range_start}&end={range_end}&t=100&c=n")
                         part_midis.append(midi_filename)
 
         base_filename = os.path.splitext(os.path.basename(self.filepath))[0]
         if (range_start != None):
-            midi_filename = os.path.join(output_path, ("%s.mid?ins=%d&start=%d&end=%d&t=100&c=n" % (base_filename, ins, range_start, range_end)))
+            midi_filename = os.path.join(output_path, f"{base_filename}.mid?ins={ins}&start={range_start}&end={range_end}&t=100&c=n")
         else:
-            midi_filename = os.path.join(output_path, ("%s.mid?ins=%d&t=100&c=n" % (base_filename, ins,)))
+            midi_filename = os.path.join(output_path, f"{base_filename}.mid?ins={ins}&t=100&c=n")
         part_midis = [prefix + os.path.basename(s) for s in part_midis]
         return (prefix+os.path.basename(midi_filename), part_midis)
 
@@ -647,7 +646,7 @@ class Music21TalkingScore(TalkingScoreBase):
                     s.insert(pi_measures)
 
         base_filename = os.path.splitext(os.path.basename(self.filepath))[0]
-        midi_filename = os.path.join(output_path, "%s%s.mid" % (base_filename, postfix_filename))
+        midi_filename = os.path.join(output_path, f"{base_filename}{postfix_filename}.mid")
         # todo - might need to add in tempos if part 0 is not included
         if not os.path.exists(midi_filename):
             s.write('midi', midi_filename)
@@ -660,7 +659,7 @@ class Music21TalkingScore(TalkingScoreBase):
             s = stream.Score(id='temp')
             s.insert(self.score.parts[self.part_instruments[instrument][1]+part])
             base_filename = os.path.splitext(os.path.basename(self.filepath))[0]
-            midi_filename = os.path.join(output_path, "%s%s_p%s.mid" % (base_filename, postfix_filename, str(part+1)))
+            midi_filename = os.path.join(output_path, f"{base_filename}{postfix_filename}_p{(part+1)}.mid")
             if not os.path.exists(midi_filename):
                 s.write('midi', midi_filename)
         else:  # specific measures
@@ -677,7 +676,7 @@ class Music21TalkingScore(TalkingScoreBase):
             s.insert(pi_measures)
 
             base_filename = os.path.splitext(os.path.basename(self.filepath))[0]
-            midi_filename = os.path.join(output_path, "%s%s_p%s.mid" % (base_filename, postfix_filename, str(part+1)))
+            midi_filename = os.path.join(output_path, f"{base_filename}{postfix_filename}_p{(part+1)}.mid")
             if not os.path.exists(midi_filename):
                 s.write('midi', midi_filename)
         return midi_filename
@@ -687,7 +686,7 @@ class Music21TalkingScore(TalkingScoreBase):
         base_filename = os.path.splitext(os.path.basename(self.filepath))[0]
         if range_start is None and range_end is None:
             # Export the whole score
-            midi_filename = os.path.join(output_path, "%s.mid" % (base_filename))
+            midi_filename = os.path.join(output_path, f"{base_filename}.mid")
             if not os.path.exists(midi_filename):
                 self.score.write('midi', midi_filename)
             return midi_filename
@@ -696,7 +695,7 @@ class Music21TalkingScore(TalkingScoreBase):
                 if p.id not in parts:
                     continue
 
-                midi_filename = os.path.join(output_path, "%s_p%s_%s_%s.mid" % (base_filename, p.id, range_start, range_end))
+                midi_filename = os.path.join(output_path, f"{base_filename}_p{p.id}_{range_start}_{range_end}.mid")
                 if not os.path.exists(midi_filename):
                     midi_stream = p.measures(range_start, range_end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature', 'TempoIndication'))
                     if p != self.score.parts[0]:  # only part 0 has tempos
@@ -707,7 +706,7 @@ class Music21TalkingScore(TalkingScoreBase):
                     midi_stream.write('midi', midi_filename)
                 return midi_filename
         else:  # both hands
-            midi_filename = os.path.join(output_path, "%s_%s_%s.mid" % (base_filename, range_start, range_end))
+            midi_filename = os.path.join(output_path, f"{base_filename}_{range_start}_{range_end}.mid")
             if not os.path.exists(midi_filename):
                 midi_stream = self.score.measures(range_start, range_end, collect=('Clef', 'TimeSignature', 'Instrument', 'KeySignature', 'TempoIndication'))
                 # music21 v6.3.0 tries to expand repeats - which causes error if segment only includes the start repeat mark
@@ -746,7 +745,7 @@ class Music21TalkingScore(TalkingScoreBase):
         elif settings['octaveDescription'] == "number":
             return str(octave)
 
-        # return "%s %s" % (self._PITCH_MAP.get(pitch[-1], ''), pitch[0] )
+        # return f"{self._PITCH_MAP.get(pitch[-1], '')} {pitch[0]}"
 
     def map_pitch(self, pitch):
         global settings
@@ -760,7 +759,7 @@ class Music21TalkingScore(TalkingScoreBase):
             pitch_name = self._PITCH_PHONETIC_MAP.get(pitch.name[0], "?")
 
         if pitch.accidental and pitch.accidental.displayStatus and pitch_name != "":
-            pitch_name = "%s %s" % (pitch_name, pitch.accidental.fullName)
+            pitch_name = f"{pitch_name} {pitch.accidental.fullName}"
         return pitch_name
 
     def map_duration(self, duration):
@@ -768,7 +767,7 @@ class Music21TalkingScore(TalkingScoreBase):
         if settings['rhythmDescription'] == "american":
             return duration.type
         elif settings['rhythmDescription'] == "british":
-            return self._DURATION_MAP.get(duration.type, 'Unknown duration %s' % duration.type)
+            return self._DURATION_MAP.get(duration.type, f'Unknown duration {duration.type}')
         elif settings['rhythmDescription'] == "none":
             return ""
 
@@ -978,4 +977,4 @@ if __name__ == '__main__':
     with open(testScoreOutputFilePath, "wb") as fh:
         fh.write(html)
 
-    os.system('open http://0.0.0.0:8000/static/data/%s' % os.path.basename(testScoreOutputFilePath))
+    os.system(f'open http://0.0.0.0:8000/static/data/{os.path.basename(testScoreOutputFilePath)}')
