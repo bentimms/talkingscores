@@ -904,6 +904,7 @@ class HTMLTalkingScoreFormatter():
 
             selected_instruments_midis = {}
             for index, ins in enumerate(self.score.selected_instruments):
+                logger.debug(f"enumerate selected instruments... index = {index} and ins ={ins}")
                 midis = self.score.generate_midi_filenames(prefix="/midis/" + os.path.basename(web_path) + "/", range_start=0, range_end=0, output_path=output_path, add_instruments=[ins], postfix_filename="ins"+str(index))
                 selected_instruments_midis[ins] = {"ins": ins,  "midi": midis[0], "midi_parts": midis[1]}
                 selected_instruments_descriptions[ins] = self.score.generate_part_descriptions(instrument=ins, start_bar=0, end_bar=1)
@@ -945,6 +946,7 @@ class HTMLTalkingScoreFormatter():
             selected_instruments_descriptions = {}  # key = instrument index,
             selected_instruments_midis = {}
             for index, ins in enumerate(self.score.selected_instruments):
+                logger.debug(f"adding to selected_instruments_descriptions - index = {index} and ins = {ins}")
                 midis = self.score.generate_midi_filenames(prefix="/midis/" + os.path.basename(web_path) + "/", range_start=bar_index, range_end=end_bar_index, output_path=output_path, add_instruments=[ins], postfix_filename="ins"+str(index))
                 selected_instruments_midis[ins] = {"ins": ins,  "midi": midis[0], "midi_parts": midis[1]}
                 selected_instruments_descriptions[ins] = self.score.generate_part_descriptions(instrument=ins, start_bar=bar_index, end_bar=end_bar_index)
