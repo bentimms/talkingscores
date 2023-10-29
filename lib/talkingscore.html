@@ -119,6 +119,7 @@ Click:
             <h3>{{instruments[instrument_index][0]}}</h3>
         {% endif %}
         {% for part_description in description %}
+            {% set part_index = loop.index0 %}
             {% if description|length > 1 %}
                 <h3>{{part_names[instruments[instrument_index][1] + loop.index-1 ]}}</h3>
             {% endif %}
@@ -126,8 +127,8 @@ Click:
             {% for bar, events_for_beats in part_description.items() %}
                 {#% if not loop.first %}<br/>{% endif %#}
                 <h4>Bar: {{ bar }}</h4>
-                {% if bar in repetition_in_contexts[instrument_index] %}
-                    Repetition - {{repetition_in_contexts[instrument_index][bar]}} 
+                {% if bar in repetition_in_contexts[instruments[instrument_index][1] + part_index] %}
+                    Repetition - {{repetition_in_contexts[instruments[instrument_index][1] + part_index][bar]}} 
                     <br/> <br/>
                 {% endif %}
 

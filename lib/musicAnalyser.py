@@ -82,7 +82,7 @@ class MusicAnalyser:
         self.analyse_parts = []
         self.repetition_parts = []
         self.summary_parts = []
-        self.repetition_in_contexts = []
+        self.repetition_in_contexts = {} # key = part index
         self.general_summary = ""
 
         analyse_index = 0
@@ -95,7 +95,7 @@ class MusicAnalyser:
                     self.analyse_parts[analyse_index].set_part(self.score.parts[part_index])
                     summary = self.analyse_parts[analyse_index].describe_summary()
                     summary += self.analyse_parts[analyse_index].describe_repetition_summary()
-                    self.repetition_in_contexts.append(self.analyse_parts[analyse_index].describe_repetition_in_context())
+                    self.repetition_in_contexts[part_index] = (self.analyse_parts[analyse_index].describe_repetition_in_context())
                     self.summary_parts.append(summary)
 
                     # self.repetition_parts.append(self.analyse_parts[analyse_index].describe_repetition())
@@ -960,7 +960,7 @@ class AnalysePart:
     # modifies the repetition_in_context dictionary
     def describe_measure_usage_in_context(self, repeated_measures_not_in_groups_dictionary, repeat_what, repetition_in_context):
         for key, ms in repeated_measures_not_in_groups_dictionary.items():
-            temp = "Bar " + str(key) + " is used " + str(len(ms)) + " more times.  "
+            temp = repeat_what + str(key) + " is used " + str(len(ms)) + " more times.  "
             self.insert_or_plus_equals(repetition_in_context, key, temp)
 
             for index, m in enumerate(ms):
