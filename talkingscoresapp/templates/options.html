@@ -5,24 +5,24 @@
 {% block noindex %}<meta name="robots" content="noindex" />{% endblock %}
 
 {% block content %}
+    <div class="col-md-9 mx-auto text-start">
 
-    {% if form.non_field_errors %}
-        <div class="alert alert-danger" role="alert">
-            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-            {{ form.non_field_errors }}
-        </div>
-    {% endif %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
 
-    {% if form.errors %}
-        <div class="alert alert-danger" role="alert">
-            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-            {{ form.errors }}
-        </div>
-    {% endif %}
+        {% if form.errors %}
+            <div class="alert alert-danger" role="alert">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                {{ form.errors }}
+            </div>
+        {% endif %}
 
-    <h1>Detected features:</h1>
-    <div class="row text-left lead">
-        <div class="col-md-6 col-md-offset-3">
+        <h1 class="text-center">Detected features:</h1>
+        <div class="tsp">
             <ul class="list-unstyled">
                 <li>{{ score_info.title }} by {{ score_info.composer }}</li>
                 <li>{{ score_info.instruments|length }} instrument{{ score_info.instruments|length|pluralize }}:
@@ -37,17 +37,15 @@
                 <li>{{ score_info.number_of_bars }} bars</li>
             </ul>
         </div>
-    </div>
 
-    <h1>Options</h1>
-    
-    <div class="row text-left">
-        <div class="col-md-6 col-md-offset-3">
-            
+        <h1 class="text-center">Options</h1>
+        
+        <div class="tsp">
+                
             <form class="form-horizontal" method="post">
                 {% csrf_token %}
                 
-                <h3>Play parts:</h3>
+                <h2 class="bold">Play parts:</h2>
                 <div id="" class="form-group">
                     <div class="checkbox">
                         <input type="checkbox" name="chk_playAll" id="chk_playAll" value="checked" checked="checked" aria-label="Play all parts together"/>
@@ -62,8 +60,9 @@
                         <label for="chk_playUnselected">Play all not selected parts together</label>
                     </div>
                 </div>
-    
-                <h3>Selected instruments:</h3>
+                <br>
+
+                <h2 class="bold">Selected instruments:</h2>
                 <div id="" class="form-group">                    
                     {% for instrument in score_info.instruments %}
                         <div class="checkbox">
@@ -74,8 +73,9 @@
                         </div>
                     {% endfor %}
                 </div>
+                <br/>
 
-                <h3>Description:</h3>
+                <h2 class="bold">Description:</h2>
                 <div class="form-group">
                     <label for="bars_at_a_time">Bars at a time</label>
                     <select name="bars_at_a_time" id="bars_at_a_time" class="form-control">
@@ -84,7 +84,7 @@
                         <option>4</option>
                         <option>8</option>
                     </select>
-                    <br/><br/>
+                    <br/>
 
                     <label for="pitch_description">Pitch description</label>
                     <select name="pitch_description" id="pitch_description" class="form-control">
@@ -93,8 +93,8 @@
                         <option value="none">None</option>
                         <option value="phonetic">Phonetic (Charlie / Delta)</option>
                     </select>
-                    <p class="lead">Setting the pitch description to &quot;None&quot;, might be of interest when using coloured text.</p>
-                    <br/><br/>
+                    <p>Setting the pitch description to &quot;None&quot;, might be of interest when using coloured text.</p>
+                    <br/>
 
                     <label for="rhythm_description">Rhythm description</label>
                     <select name="rhythm_description" id="rhythm_description" class="form-control">
@@ -102,21 +102,21 @@
                         <option value="british" selected>British (crotchet etc)</option>
                         <option value="none">None</option>
                     </select>
-                    <br/><br/>
+                    <br/>
 
                     <label for="dot_position">Position of dot in dotted rhythms</label>
                     <select name="dot_position" id="dot_position" class="form-control">
                         <option value="before" selected>Before rhythm</option>
                         <option value="after">After rhythm</option>
                     </select>
-                    <br/><br/>
+                    <br/>
 
                     <label for="rhythm_announcement">Rhythm announcement</label>
                     <select name="rhythm_announcement" id="rhythm_announcement" class="form-control">
                         <option value="everyNote">Every note</option>
                         <option value="onChange" selected>On change</option>
                     </select>
-                    <br/><br/>
+                    <br/>
 
                     <label for="octave_description">Octave description</label>
                     <select name="octave_description" id="octave_description" class="form-control">
@@ -124,14 +124,14 @@
                         <option value="none">None</option>
                         <option value="number">Number (4 / 5)</option>
                     </select>
-                    <br/><br/>
+                    <br/>
 
                     <label for="octave_position">Octave position</label>
                     <select name="octave_position" id="octave_position" class="form-control">
                         <option value="before" selected>Before pitch</option>
                         <option value="after">After pitch</option>
                     </select>
-                    <br/><br/>
+                    <br/>
 
                     <label for="octave_announcement">Octave announcement</label>
                     <select name="octave_announcement" id="octave_announcement" class="form-control">
@@ -140,10 +140,10 @@
                         <option value="firstNote">First note of section</option>
                         <option value="onChange" selected>On change</option>
                     </select>
-                    <br/><br/>
+                    <br/>
                 </div>
 
-                <h3>Coloured output:</h3>
+                <h2 class="bold">Coloured output:</h2>
                 <p class="lead">Set the text colour or background colour of parts of the description to use colours.</p>
                 <div class="form-group">
                     <label for="colour_position">Colour position</label>
@@ -176,7 +176,7 @@
                 </div>
 
             </form>
+        
         </div>
     </div>
-
 {% endblock content %}

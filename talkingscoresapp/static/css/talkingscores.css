@@ -35,6 +35,16 @@ body {
 	color:white !important;
 }
 
+.tsp {
+	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-size: 26px;
+	line-height: 1.4; 
+}
+
+.bold {
+	font-weight: bold;
+}
+
 .loading {
 	-webkit-animation:spin 2s linear infinite;
 	-moz-animation:spin 2s linear infinite;

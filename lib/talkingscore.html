@@ -9,7 +9,11 @@
     <script type='text/javascript' src='//www.midijs.net/lib/midi.js'></script> 
 {#   <!-- extras -->#}
     <style type="text/css">
-        body{font-family: Georgia; font-size: 16pt}
+        body{font-family: Georgia; font-size: 26pt}
+        
+        h4 {
+            margin-block-end:1rem;
+        }
     </style>
 </head>
 <body>
@@ -22,19 +26,20 @@
 <p>Music, both hands, a bar at a time, beat by beat</p>
 
 <h2>Entire score:</h2>
-Tempo:
-<select class="ddlTempo" name="tempo" id="ddlTempo">
-    <option value="50">50%</option>
-    <option value="100" selected>100%</option>
-    <option value="150">150%</option>
-</select>
-&nbsp; &nbsp;
-Click:
-<select class="ddlClick" name="click" id="ddlClick">
-    <option value="n">None</option>
-    <option value="be">Bars / Beats</option>
-</select>
-<br/>
+<p>
+    Tempo:
+    <select class="ddlTempo" name="tempo" id="ddlTempo">
+        <option value="50">50%</option>
+        <option value="100" selected>100%</option>
+        <option value="150">150%</option>
+    </select>
+    &nbsp; &nbsp;
+    Click:
+    <select class="ddlClick" name="click" id="ddlClick">
+        <option value="n">None</option>
+        <option value="be">Bars / Beats</option>
+    </select>
+</p>
 {% if play_all %}
     <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ full_score_midis.midi_all + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play All Instruments </a>
     <br/>
@@ -76,19 +81,20 @@ Click:
 {% for segment in music_segments %}
 
     <h2>Bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}</h2>
-    Tempo:
-    <select class="ddlTempo" name="tempo">
-        <option value="50">50%</option>
-        <option value="100" selected>100%</option>
-        <option value="150">150%</option>
-    </select>
-    &nbsp; &nbsp;
-    Click:
-    <select class="ddlClick" name="click">
-        <option value="n">None</option>
-        <option value="be">Bars / Beats</option>
-    </select>
-    <br/>
+    <p>
+        Tempo:
+        <select class="ddlTempo" name="tempo">
+            <option value="50">50%</option>
+            <option value="100" selected>100%</option>
+            <option value="150">150%</option>
+        </select>
+        &nbsp; &nbsp;
+        Click:
+        <select class="ddlClick" name="click">
+            <option value="n">None</option>
+            <option value="be">Bars / Beats</option>
+        </select>
+    </p>
     {% if play_all %}
         <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ segment.midi_all + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play All - bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %} </a>
         <br/>
@@ -101,8 +107,8 @@ Click:
         <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ segment.midi_un + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play Unselected - bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %} </a>
         <br/>
     {% endif %}
-    <br/>
-    <h3>Instrument MIDIs</h3><br/>
+    
+    <h3>Instrument MIDIs</h3>
     {% for index, ins in segment.selected_instruments_midis.items() %}
         <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ ins.midi + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play - {{instruments[ins.ins][0]}} - bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %} </a><br/>
         <li style="margin-left:15px; list-style-type:none;">
