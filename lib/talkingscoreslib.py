@@ -324,13 +324,26 @@ class Music21TalkingScore(TalkingScoreBase):
             settings['rhythmDescription'] = "british"
         return self.describe_tempo(self.score.metronomeMarkBoundaries()[0][2])
 
+    # some tempos have soundingNumber set but not number
+    # we would get an error trying to scale a tempo.number of None
+    # static so that it can be called by eg midiHandler when scaling tempos
+    @staticmethod
+    def fix_tempo_number(tempo):
+        if (tempo.number == None):
+            if (tempo.numberSounding != None):
+                tempo.number = tempo.numberSounding
+            else:
+                tempo.number = 120
+                tempo.text = "Error - " + tempo.text
+        return tempo
+
     def describe_tempo(self, tempo):
         tempo_text = ""
+        tempo = self.fix_tempo_number(tempo)
         if (tempo.text != None):
             tempo_text += tempo.text + " (" + str(math.floor(tempo.number)) + " bpm @ " + self.describe_tempo_referent(tempo) + ")"
         else:
             tempo_text += str(math.floor(tempo.number)) + " bpm @ " + self.describe_tempo_referent(tempo)
-        print(text)
         return tempo_text
 
     # the referent is the beat duration ie are you counting crotchets or minims etc

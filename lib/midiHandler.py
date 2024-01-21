@@ -9,6 +9,7 @@ import logging.config
 from tracemalloc import BaseFilter
 from music21 import *
 from talkingscores.settings import BASE_DIR, MEDIA_ROOT, STATIC_ROOT, STATIC_URL
+from talkingscoreslib import Music21TalkingScore
 
 logger = logging.getLogger("TSScore")
 
@@ -235,11 +236,12 @@ class MidiHandler:
             if (mmb[0] >= offset_start+stream.duration.quarterLength):  # ignore tempos that start after stream ends
                 return
             if (mmb[1] > offset_start):  # if mmb ends during the segment
+                tempoNumber = Music21TalkingScore.fix_tempo_number(tempo=mmb[2]).number
                 if (mmb[0]) <= offset_start:  # starts before segment so insert it at the start of the stream
                     # if there is a tempo already in the stream at offset 0 and we insert a different tempo - it seems to happen just before the original tempo so is ignored...
-                    stream.insert(0.001, tempo.MetronomeMark(number=mmb[2].number*scale, referent=mmb[2].referent))
+                    stream.insert(0.001, tempo.MetronomeMark(number=tempoNumber*scale, referent=mmb[2].referent))
                 else:  # starts during segment so insert it part way through the stream
-                    stream.insert(mmb[0]-offset_start + self.tempo_shift, tempo.MetronomeMark(number=mmb[2].number*scale, referent=mmb[2].referent))
+                    stream.insert(mmb[0]-offset_start + self.tempo_shift, tempo.MetronomeMark(number=tempoNumber*scale, referent=mmb[2].referent))
 
     def make_midi_path_from_options(self, sel=None, part=None, ins=None, start=None, end=None, click=None, tempo=None):
         self.midiname = self.filename
