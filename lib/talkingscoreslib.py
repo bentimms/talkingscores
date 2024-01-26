@@ -138,6 +138,18 @@ class TSPitch(TSEvent):
             return ""
 
 
+class TSUnpitched(TSEvent):
+    pitch = None
+
+    def render(self, context=None):
+        rendered_elements = []
+        # Render the duration
+        rendered_elements.append(' '.join(super(TSUnpitched, self).render(context)))
+        # Render the pitch
+        rendered_elements.append(' unpitched')
+        return rendered_elements
+
+
 class TSRest(TSEvent):
     pitch = None
 
@@ -528,6 +540,9 @@ class Music21TalkingScore(TalkingScoreBase):
                     event.tie = element.tie.type
 
                 event.expressions = element.expressions
+            elif element_type == 'Unpitched':
+                event = TSUnpitched()
+                description_order = 1
             elif element_type == 'Rest':
                 event = TSRest()
                 description_order = 1

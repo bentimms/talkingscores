@@ -82,7 +82,7 @@ class MusicAnalyser:
         self.analyse_parts = []
         self.repetition_parts = []
         self.summary_parts = []
-        self.repetition_in_contexts = {} # key = part index
+        self.repetition_in_contexts = {}  # key = part index
         self.general_summary = ""
 
         analyse_index = 0
@@ -1243,42 +1243,46 @@ class AnalysePart:
                 self.total_chord_duration += d
                 self.chord_count += 1
             elif n.isChord == False:
-                ai.event_type = 'n'
-
-                if n.pitch.accidental is not None and n.pitch.accidental.displayStatus == True:
-                    measure_accidentals += 1
-                    self.accidental_count += 1
-                self.possible_accidental_count += 1
-
-                self.pitch_number_dictionary[n.pitch.midi].append(event_index)
-                ai.pitch_number_index = [n.pitch.midi, len(self.pitch_number_dictionary[n.pitch.midi])-1]
-
-                if self.pitch_name_dictionary.get(n.pitch.name) == None:
-                    self.pitch_name_dictionary[n.pitch.name] = [event_index]
+                if isinstance(n, note.Unpitched):
+                    ai.event_type = 'u'
                 else:
-                    self.pitch_name_dictionary[n.pitch.name].append(event_index)
-                ai.pitch_name_index = [n.pitch.name, len(self.pitch_name_dictionary[n.pitch.name])-1]
 
-                # intervals
-                if (previous_note_pitch > -1):
-                    interval = n.pitch.midi-previous_note_pitch
-                    if self.interval_dictionary.get(interval) == None:
-                        self.interval_dictionary[interval] = [event_index]
+                    ai.event_type = 'n'
+
+                    if n.pitch.accidental is not None and n.pitch.accidental.displayStatus == True:
+                        measure_accidentals += 1
+                        self.accidental_count += 1
+                    self.possible_accidental_count += 1
+
+                    self.pitch_number_dictionary[n.pitch.midi].append(event_index)
+                    ai.pitch_number_index = [n.pitch.midi, len(self.pitch_number_dictionary[n.pitch.midi])-1]
+
+                    if self.pitch_name_dictionary.get(n.pitch.name) == None:
+                        self.pitch_name_dictionary[n.pitch.name] = [event_index]
                     else:
-                        self.interval_dictionary[interval].append(event_index)
-                    ai.interval_index = [interval, len(self.interval_dictionary.get(interval))-1]
+                        self.pitch_name_dictionary[n.pitch.name].append(event_index)
+                    ai.pitch_name_index = [n.pitch.name, len(self.pitch_name_dictionary[n.pitch.name])-1]
 
-                    if interval > 0:
-                        self.interval_ascending_count += 1
-                    elif interval < 0:
-                        self.interval_descending_count += 1
-                    else:
-                        self.interval_unison_count += 1
-                    self.interval_count += 1
+                    # intervals
+                    if (previous_note_pitch > -1):
+                        interval = n.pitch.midi-previous_note_pitch
+                        if self.interval_dictionary.get(interval) == None:
+                            self.interval_dictionary[interval] = [event_index]
+                        else:
+                            self.interval_dictionary[interval].append(event_index)
+                        ai.interval_index = [interval, len(self.interval_dictionary.get(interval))-1]
 
-                    interval_abs = abs(interval)
-                    if interval_abs < 24:
-                        self.count_intervals_abs[interval_abs] += 1
+                        if interval > 0:
+                            self.interval_ascending_count += 1
+                        elif interval < 0:
+                            self.interval_descending_count += 1
+                        else:
+                            self.interval_unison_count += 1
+                        self.interval_count += 1
+
+                        interval_abs = abs(interval)
+                        if interval_abs < 24:
+                            self.count_intervals_abs[interval_abs] += 1
 
                 # duration
                 d = n.duration.quarterLength  # numeric value
@@ -1294,7 +1298,10 @@ class AnalysePart:
                         self.rhythm_note_dictionary[d].append(event_index)
                     ai.rhythm_note_index = [d, len(self.rhythm_note_dictionary.get(d))-1]
 
-                previous_note_pitch = n.pitch.midi
+                if isinstance(n, note.Unpitched):
+                    previous_note_pitch = -1
+                else:
+                    previous_note_pitch = n.pitch.midi
                 self.total_note_duration += d
                 self.note_count += 1
 
