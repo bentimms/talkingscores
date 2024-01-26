@@ -265,9 +265,10 @@ class Music21TalkingScore(TalkingScoreBase):
             return self.score.metadata.title
         # Have a guess
         for tb in self.score.flat.getElementsByClass('TextBox'):
-            if tb.justify == 'center' and tb.alignVertical == 'top' and tb.size > 18:
+            # in some musicxml files - a textbox might not have those attributes - so we use hasattr()...
+            if hasattr(tb, 'justifty') and tb.justify == 'center' and hasattr(tb, 'alignVertical') and tb.alignVertical == 'top' and hasattr(tb, 'size') and tb.size > 18:
                 return tb.content
-        return "Unknown"
+        return "Error reading title"
 
     def get_composer(self):
         if self.score.metadata.composer != None:
