@@ -959,6 +959,9 @@ class HTMLTalkingScoreFormatter():
             while (end_bar_index >= 1 and self.score.score.parts[0].measure(end_bar_index+1) == None):
                 end_bar_index = end_bar_index - 1
                 print("end bar index was too big - now " + str(end_bar_index))
+            # if there is only 1 bar - and it isn't a pickup bar
+            if end_bar_index == 0 and self.score.score.parts[0].measure(0) == None:
+                end_bar_index = 1
             for checkts in range(bar_index, end_bar_index+1):
                 if (self.score.score.parts[0].measure(bar_index) == None):
                     print("bar " + str(bar_index) + " is None...")

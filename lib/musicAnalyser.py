@@ -893,7 +893,8 @@ class AnalysePart:
         temp = self.replace_end_with(temp, ", ", "")
         if temp == "":
             temp = self.describe_count_list_several(sorted_repetition_lengths, total_lengths, "lengths")
-        repetition += "The repeated sections are " + temp + " measures long.  "
+        if temp != "":
+            repetition += "The repeated sections are " + temp + " measures long.  "
 
         # rhythm or interval
         total_lengths = 0
@@ -904,11 +905,13 @@ class AnalysePart:
         temp = self.replace_end_with(temp, ", ", "")
         if temp == "":
             temp = self.describe_count_list_several(sorted_repetition_lengths, total_lengths, "lengths")
-        repetition += "The repeated sections of just rhythm / intervals are " + temp + " measures long.  "
+        if temp != "":
+            repetition += "The repeated sections of just rhythm / intervals are " + temp + " measures long.  "
 
-        repetition += "There are " + str(len(self.measure_analyse_indexes_list)) + " unique measures - "
-        repetition += " of these, " + str(len(self.measure_rhythm_analyse_indexes_list)) + " measures have unique rhythm "
-        repetition += " and " + str(len(self.measure_intervals_analyse_indexes_list)) + " measures have unique intervals...  "
+        if (len(self.part.getElementsByClass('Measure')) > 1):
+            repetition += "There are " + str(len(self.measure_analyse_indexes_list)) + " unique measures - "
+            repetition += " of these, " + str(len(self.measure_rhythm_analyse_indexes_list)) + " measures have unique rhythm "
+            repetition += " and " + str(len(self.measure_intervals_analyse_indexes_list)) + " measures have unique intervals...  "
 
         if repetition != "":
             repetition = "<br/>"+repetition.capitalize()
