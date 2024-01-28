@@ -294,11 +294,16 @@ class Music21TalkingScore(TalkingScoreBase):
     def get_initial_time_signature(self):
         # Get the first measure of the first part
         m1 = self.score.parts[0].measures(1, 1)
-        initial_time_signature = m1.getTimeSignatures()[0]
+        initial_time_signature = None
+        if (len(self.score.parts[0].getElementsByClass('Measure')[0].getElementsByClass(meter.TimeSignature)) > 0):
+            initial_time_signature = self.score.parts[0].getElementsByClass('Measure')[0].getElementsByClass(meter.TimeSignature)[0]
         return self.describe_time_signature(initial_time_signature)
 
     def describe_time_signature(self, ts):
-        return " ".join(ts.ratioString.split("/"))
+        if ts != None:
+            return " ".join(ts.ratioString.split("/"))
+        else:
+            return " error reading time signature...  "
 
     def get_initial_key_signature(self):
         m1 = self.score.parts[0].measures(1, 1)
@@ -922,7 +927,7 @@ class HTMLTalkingScoreFormatter():
             self.time_and_keys.setdefault(ks.measureNumber, []).append(description)
 
         self.score.timeSigs = {}  # key=bar number.  Value = timeSig
-        previous_ts = self.score.score.parts[0].getElementsByClass('Measure')[0].getElementsByClass(meter.TimeSignature)[0]
+        previous_ts = self.score.score.parts[0].getElementsByClass('Measure')[0].getTimeSignatures()[0]
 
         # pickup bar
         if self.score.score.parts[0].getElementsByClass('Measure')[0].number != self.score.score.parts[0].measures(1, 2).getElementsByClass('Measure')[0].number:

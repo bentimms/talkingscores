@@ -184,6 +184,9 @@ class MidiHandler:
             else:
                 if (ts == None):
                     ts: meter.TimeSignature = m.previous('TimeSignature')
+                # if the score didn't have a time signature - then just set it to 1/4 to get the first beat of each bar...
+                if (ts == None):
+                    ts = meter.TimeSignature('1/4')
             clickmeasure = stream.Measure()
             clickmeasure.mergeAttributes(m)
             clickmeasure.duration = ts.barDuration
