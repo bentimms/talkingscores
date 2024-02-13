@@ -2,5 +2,4 @@ User-agent: *
 Disallow: /score_options/
 Disallow: /process/
 Disallow: /score/
-Disallow: /midis/
 

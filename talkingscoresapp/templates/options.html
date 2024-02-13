@@ -1,93 +1,182 @@
 {% extends "base_site.html" %}
-{% load staticfiles %}
+{% load static %}
 
 {% block title %}Options - Talking Scores (Beta){% endblock %}
 {% block noindex %}<meta name="robots" content="noindex" />{% endblock %}
 
 {% block content %}
-    <h1>Summary:</h1>
-    <p class="lead">Right hand: {{summary_right_hand}}</p>
-    <p class="lead">Left hand: {{summary_left_hand}}</p>
-    
-    <h1>Repetition:</h1>
-    <p class="lead">Right hand: {{repetition_right_hand}}</p>
-    <p class="lead">Left hand: {{repetition_left_hand}}</p>
-    
-    <h1>Options</h1>
-    <p class="lead">Select which parts and how many bars at a time you would like.</p>
-
-    <div class="row text-left">
-        <div class="col-md-6 col-md-offset-3">
-            <h3>Detected features:</h3>
-            <ul class="list-unstyled">
-                <li>{{ title }} by {{ composer }}</li>
-                <li>{{ instruments|length }} instrument{{ instruments|length|pluralize }}:
-                    {% for instrument in instruments %}
-    {% if forloop.first %}{% else %}
-        {% if forloop.last %} and {% else %}, {% endif %}
-    {% endif %}{{instrument}}
-{% endfor %} </li>
-                <li>Time signature of {{ time_signature }}</li>
-                <li>Key signature of {{ key_signature }}</li>
-                <li>Tempo: {{ tempo }}</li>
-                <li>{{ number_of_bars }} bars</li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="row text-left">
-        <div class="col-md-6 col-md-offset-3">
-            <h3>Options:</h3>
+    <div class="col-md-9 mx-auto text-start">
 
         {% if form.non_field_errors %}
-        <div class="alert alert-danger" role="alert">
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-            {{ form.non_field_errors }}
-        </div>
+            <div class="alert alert-danger" role="alert">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                {{ form.non_field_errors }}
+            </div>
         {% endif %}
-
 
         {% if form.errors %}
-        <div class="alert alert-danger" role="alert">
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-            {{ form.errors }}
-        </div>
+            <div class="alert alert-danger" role="alert">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                {{ form.errors }}
+            </div>
         {% endif %}
 
+        <h1 class="text-center">Detected features:</h1>
+        <div class="tsp">
+            <ul class="list-unstyled">
+                <li>{{ score_info.title }} by {{ score_info.composer }}</li>
+                <li>{{ score_info.instruments|length }} instrument{{ score_info.instruments|length|pluralize }}:
+                {% for instrument in score_info.instruments %}
+                    {% if forloop.first %}{% else %}
+                        {% if forloop.last %} and {% else %}, {% endif %}
+                    {% endif %}{{instrument}}
+                {% endfor %} </li>
+                <li>Time signature of {{ score_info.time_signature }}</li>
+                <li>Key signature of {{ score_info.key_signature }}</li>
+                <li>Tempo: {{ score_info.tempo }}</li>
+                <li>{{ score_info.number_of_bars }} bars</li>
+            </ul>
+        </div>
+
+        <h1 class="text-center">Options</h1>
+        
+        <div class="tsp">
+                
             <form class="form-horizontal" method="post">
                 {% csrf_token %}
-                <div class="form-group">
-                    <p>Selected instruments:</p>
-
-                    {% for instrument in instruments %}
+                
+                <h2 class="bold">Play parts:</h2>
+                <div id="" class="form-group">
                     <div class="checkbox">
-                        <label for="instrument_{{ forloop.counter }}">
-                            <input type="checkbox" id="instrument_{{ forloop.counter }}" value="checked" checked="checked"
-                                   aria-label="{{ instrument }}">
-                            {{ instrument }}
-                        </label>
+                        <input type="checkbox" name="chk_playAll" id="chk_playAll" value="checked" checked="checked" aria-label="Play all parts together"/>
+                        <label for="chk_playAll">Play all parts together</label>
                     </div>
+                    <div class="checkbox">
+                        <input type="checkbox" name="chk_playSelected" id="chk_playSelected" value="checked" checked="checked" aria-label="Play all selected parts together"/>
+                        <label for="chk_playSelected">Play all selected parts together</label>
+                    </div>
+                    <div class="checkbox">
+                        <input type="checkbox" name="chk_playUnselected" id="chk_playUnselected" value="checked" checked="checked" aria-label="Play all not selected parts together"/>
+                        <label for="chk_playUnselected">Play all not selected parts together</label>
+                    </div>
+                </div>
+                <br>
+
+                <h2 class="bold">Selected instruments:</h2>
+                <div id="" class="form-group">                    
+                    {% for instrument in score_info.instruments %}
+                        <div class="checkbox">
+                            <input type="checkbox" name="instruments" id="instrument_{{ forloop.counter }}" value="{{ forloop.counter }}" checked="checked" aria-label="{{ instrument }}">
+                            <label for="instrument_{{ forloop.counter }}">
+                                {{ instrument }}
+                            </label>
+                        </div>
                     {% endfor %}
                 </div>
+                <br/>
+
+                <h2 class="bold">Description:</h2>
                 <div class="form-group">
                     <label for="bars_at_a_time">Bars at a time</label>
                     <select name="bars_at_a_time" id="bars_at_a_time" class="form-control">
                         <option>1</option>
-                        <option>2</option>
+                        <option selected>2</option>
                         <option>4</option>
                         <option>8</option>
                     </select>
+                    <br/>
 
+                    <label for="pitch_description">Pitch description</label>
+                    <select name="pitch_description" id="pitch_description" class="form-control">
+                        <option value="colourNotes">Coloured Notes (red / brown)</option>
+                        <option value="noteName" selected>Note names (C / D)</option>
+                        <option value="none">None</option>
+                        <option value="phonetic">Phonetic (Charlie / Delta)</option>
+                    </select>
+                    <p>Setting the pitch description to &quot;None&quot;, might be of interest when using coloured text.</p>
+                    <br/>
+
+                    <label for="rhythm_description">Rhythm description</label>
+                    <select name="rhythm_description" id="rhythm_description" class="form-control">
+                        <option value="american">American (quarter note etc)</option>
+                        <option value="british" selected>British (crotchet etc)</option>
+                        <option value="none">None</option>
+                    </select>
+                    <br/>
+
+                    <label for="dot_position">Position of dot in dotted rhythms</label>
+                    <select name="dot_position" id="dot_position" class="form-control">
+                        <option value="before" selected>Before rhythm</option>
+                        <option value="after">After rhythm</option>
+                    </select>
+                    <br/>
+
+                    <label for="rhythm_announcement">Rhythm announcement</label>
+                    <select name="rhythm_announcement" id="rhythm_announcement" class="form-control">
+                        <option value="everyNote">Every note</option>
+                        <option value="onChange" selected>On change</option>
+                    </select>
+                    <br/>
+
+                    <label for="octave_description">Octave description</label>
+                    <select name="octave_description" id="octave_description" class="form-control">
+                        <option value="name" selected>Name (mid / high)</option>
+                        <option value="none">None</option>
+                        <option value="number">Number (4 / 5)</option>
+                    </select>
+                    <br/>
+
+                    <label for="octave_position">Octave position</label>
+                    <select name="octave_position" id="octave_position" class="form-control">
+                        <option value="before" selected>Before pitch</option>
+                        <option value="after">After pitch</option>
+                    </select>
+                    <br/>
+
+                    <label for="octave_announcement">Octave announcement</label>
+                    <select name="octave_announcement" id="octave_announcement" class="form-control">
+                        <option value="brailleRules">Braille rules</option>
+                        <option value="everyNote">Every note</option>
+                        <option value="firstNote">First note of section</option>
+                        <option value="onChange" selected>On change</option>
+                    </select>
+                    <br/>
                 </div>
+
+                <h2 class="bold">Coloured output:</h2>
+                <p class="lead">Set the text colour or background colour of parts of the description to use colours.</p>
+                <div class="form-group">
+                    <label for="colour_position">Colour position</label>
+                    <select name="colour_position" id="colour_position" class="form-control">
+                        <option value="none" selected>None</option>
+                        <option value="background">Background</option>
+                        <option value="text">Text</option>
+                    </select>
+                    <br/>
+
+                    <div class="checkbox">
+                        <input type="checkbox" name="chk_colourPitch" id="chk_colourPitch" value="checked" aria-label="Colour pitch description"/>
+                        <label for="chk_colourPitch">Colour pitch description</label>
+                    </div>
+                    <div class="checkbox">
+                        <input type="checkbox" name="chk_colourRhythm" id="chk_colourRhythm" value="checked" aria-label="Colour rhythm description"/>
+                        <label for="chk_colourRhythm">Colour rhythm description</label>
+                    </div>
+                    <div class="checkbox">
+                        <input type="checkbox" name="chk_colourOctave" id="chk_colourOctave" value="checked"  aria-label="Colour octave description"/>
+                        <label for="chk_colourOctave">Colour octave description</label>
+                    </div>
+                </div>
+                <br/>
+
                 <div class="form-group">
                     <div class="col-sm-offset-3 col-sm-6">
                         <button type="submit" class="btn btn-primary btn-lg">Generate Talking Score</button>
                     </div>
                 </div>
 
-
             </form>
+        
         </div>
     </div>
-
 {% endblock content %}

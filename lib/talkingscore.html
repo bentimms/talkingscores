@@ -9,7 +9,11 @@
     <script type='text/javascript' src='//www.midijs.net/lib/midi.js'></script> 
 {#   <!-- extras -->#}
     <style type="text/css">
-        body{font-family: Georgia; font-size: 16pt}
+        body{font-family: Georgia; font-size: 26pt}
+        
+        h4 {
+            margin-block-end:1rem;
+        }
     </style>
 </head>
 <body>
@@ -21,55 +25,152 @@
 <p>Time signature of {{ preamble['time_signature'] }}, key signature of {{ preamble['key_signature'] }}, tempo of {{ preamble['tempo']|default('no tempo specified') }}</p>
 <p>Music, both hands, a bar at a time, beat by beat</p>
 
-<a href="#" onClick="MIDIjs.play('{{ full_score }}'); return false;">Play entire score</a><br/>
+<h2>Entire score:</h2>
+<p>
+    Tempo:
+    <select class="ddlTempo" name="tempo" id="ddlTempo">
+        <option value="50">50%</option>
+        <option value="100" selected>100%</option>
+        <option value="150">150%</option>
+    </select>
+    &nbsp; &nbsp;
+    Click:
+    <select class="ddlClick" name="click" id="ddlClick">
+        <option value="n">None</option>
+        <option value="be">Bars / Beats</option>
+    </select>
+</p>
+{% if play_all %}
+    <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ full_score_midis.midi_all + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play All Instruments </a>
+    <br/>
+{% endif %}
+{% if play_selected %}
+    <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ full_score_midis.midi_sel + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play Selected Instruments </a>
+    <br/>
+{% endif %}
+{% if play_unselected %}
+    <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ full_score_midis.midi_un + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play Unselected Instruments</a>
+    <br/>
+{% endif %}
+
+<h3>Instrument MIDIs</h3>
+{% for index, ins in full_score_midis.selected_instruments_midis.items() %}
+    <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ ins.midi + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play - {{instruments[ins.ins][0]}} </a><br/>
+    <li style="margin-left:15px; list-style-type:none;">
+        {% for midipart in ins.midi_parts %}
+            <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ midipart + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">{{part_names[instruments[ins.ins][1] + loop.index-1 ]}}  </a><br/>
+        {% endfor %}
+    </li>
+{% endfor %}
+
+
+<h1>Stop Music Playback</h1>
 <a href="#" onClick="MIDIjs.stop(); return false;">Stop playback</a>
 
+<h1>Summary:</h1>
+{{general_summary}}
+{% for summary in parts_summary %}
+    <h3>{{selected_part_names[loop.index-1]}}</h3>
+    {{summary}}
+    <br/>
+{% endfor %}
+<br/>
+
+
+<h1>Music segment descriptions and playback</h1>
 {% for segment in music_segments %}
 
     <h2>Bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}</h2>
+    <p>
+        Tempo:
+        <select class="ddlTempo" name="tempo">
+            <option value="50">50%</option>
+            <option value="100" selected>100%</option>
+            <option value="150">150%</option>
+        </select>
+        &nbsp; &nbsp;
+        Click:
+        <select class="ddlClick" name="click">
+            <option value="n">None</option>
+            <option value="be">Bars / Beats</option>
+        </select>
+    </p>
+    {% if play_all %}
+        <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ segment.midi_all + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play All - bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %} </a>
+        <br/>
+    {% endif %}
+    {% if play_selected %}
+        <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ segment.midi_sel + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play Selected - bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %} </a>
+        <br/>
+    {% endif %}
+    {% if play_unselected %}
+        <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ segment.midi_un + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play Unselected - bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %} </a>
+        <br/>
+    {% endif %}
+    
+    <h3>Instrument MIDIs</h3>
+    {% for index, ins in segment.selected_instruments_midis.items() %}
+        <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ ins.midi + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">Play - {{instruments[ins.ins][0]}} - bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %} </a><br/>
+        <li style="margin-left:15px; list-style-type:none;">
+            {% for midipart in ins.midi_parts %}
+                <a href="#" class="lnkPlay" onClick="MIDIjs.play('{{ midipart + "&bsi="}}{{binary_selected_instruments}}{{"&bpi="}}{{binary_play_all}}'); return false;">{{part_names[instruments[ins.ins][1] + loop.index-1 ]}}  </a><br/>
+            {% endfor %}
+        </li>
+    {% endfor %}
+    <br/>
 
-    <a href="#" onClick="MIDIjs.play('{{ segment.midi_filenames['both'] }}'); return false;">Play bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, both hands</a>
-    <br/><a href="#" onClick="MIDIjs.play('{{ segment.midi_filenames['left'] }}'); return false;">Play bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, left hand</a>
-    <br/><a href="#" onClick="MIDIjs.play('{{ segment.midi_filenames['right'] }}'); return false;">Play bar{% if segment.start_bar != segment.end_bar %}s{% endif %} {{ segment.start_bar }} {% if segment.start_bar != segment.end_bar %} to {{ segment.end_bar }}{% endif %}, right hand</a>
 
-    {#  Loop over each bar pulling out the beat-based dictionaries #}
-    {% for bar, events_for_beats in segment.events_by_bar_and_beat|dictsort %}
-        {% if not loop.first %}<br/><br/>{% endif %}
-        <h3>Bar: {{ bar }}</h3>
+    {% for instrument_index, description in segment.selected_instruments_descriptions.items() %}
+        {% if segment.selected_instruments_descriptions|length > 1 %}
+            <h3>{{instruments[instrument_index][0]}}</h3>
+        {% endif %}
+        {% for part_description in description %}
+            {% set part_index = loop.index0 %}
+            {% if description|length > 1 %}
+                <h3>{{part_names[instruments[instrument_index][1] + loop.index-1 ]}}</h3>
+            {% endif %}
+            {#  Loop over each bar pulling out the beat-based dictionaries #}
+            {% for bar, events_for_beats in part_description.items() %}
+                {#% if not loop.first %}<br/>{% endif %#}
+                <h4>Bar: {{ bar }}</h4>
+                {% if bar in repetition_in_contexts[instruments[instrument_index][1] + part_index] %}
+                    Repetition - {{repetition_in_contexts[instruments[instrument_index][1] + part_index][bar]}} 
+                    <br/> <br/>
+                {% endif %}
 
-        {#  Loop over each beat pulling out the hand-based dictionaries #}
-        {% for beat, events_per_hand in events_for_beats.items() %}
-{#            {% if not loop.first %}<br/>{% endif %}#}
-            <div>Beat {{ beat | int  }}:
-            {#  Loop over each hand #}
-            {% for hand in ('Both', 'Left', 'Right', 'BothAfter') %}
-                {#  Create a dict to store the previous value (a plain variable has problems with scope) #}
-                {% set previous_event = {'value' : None} %}
-                {#  Loop over each hand #}
-                {# Are there are events in this hand? #}
-                {% if hand in events_per_hand.keys() %}
-                    <div>
-                    {# Yes, only output the name of the hand if it's not Both or BothAfter #}
-                    {% if hand not in ('Both', 'BothAfter') %}{{ hand }} hand:{% endif %}
-                    {#  Pull out the event arrays for each pitch index #}
-                    {% for voice, events_per_voice in events_per_hand[hand]|dictsort|reverse %}
-                        {% if not loop.first %} together with {% endif %}
+                {% if bar in time_and_keys %}
+                    {% for tk in time_and_keys[bar] %}
+                        {{tk}}<br/>
+                    {% endfor %}
+                    <br/>
+                {% endif %}
+                {#  Loop over each beat pulling out the hand-based dictionaries #}
+                {% for beat, events_per_beat in events_for_beats.items() %}
+                    {# {% if not loop.first %}<br/>{% endif %}#}
+                    <div>Beat {{ beat }}:
+                    {% set previous_event = {'value' : None} %}
+                    {#  Loop over each hand #}
+                    {% for voice, events_per_voice in events_per_beat|dictsort %}
+                        {% if not loop.first %} - together with {% endif %}
                         {% for pitch_space, events in events_per_voice.items() %}
                             {% if not loop.first %}, {% endif %}
                             {#  Loop over the events  #}
                             {% for event in events %}
+                                {% if not loop.first %}, {% endif %}
                                 {{ event.render(previous_event['value'])|join(' ') }}
                                 {#  Store the event for context next time around  #}
                                 {% set _ = previous_event.update({'value': event}) %}
                             {% endfor %} {# End loop over events #}
                         {% endfor %} {# End loop over pitch indexes #}
                     {% endfor %}. {# End loop over voices #}
+            
                     </div>
-                {% endif %} {# End test for existence of hand-specific dictionary #}
-            {% endfor %} {# End loop over hands indexes #}
-            </div>
-        {% endfor %} {# End loop over beats #}
-     {% endfor %} {# End loop over bars #}
+                {% endfor %} {# End loop over beats #}                    
+            {% endfor %} {# End loop over bars #}
+
+
+        {% endfor %}
+    {% endfor %}
 
 {% endfor %}
 
@@ -93,5 +194,53 @@
 {#    };#}
 {##}
 {#</script>#}
+
+<script>
+    document.addEventListener("DOMContentLoaded", (event) => {
+        document.querySelectorAll('.ddlTempo').forEach((ddlTempo) => {
+            ddlTempo.addEventListener("change", function(event) {
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                let tempo = ddlTempo.value;
+                let ddlClick = document.querySelector("#ddlClick") 
+                let click = ddlClick.value;
+                
+                document.querySelectorAll('.lnkPlay').forEach((lnkPlay) => {
+                    let href = lnkPlay.getAttribute("onClick")
+                    let posTempo = href.indexOf("&t=")
+                    href = href.substr(0,posTempo)
+                    lnkPlay.setAttribute('onClick', href +"&t="+ tempo + "&c=" + click + "&bsi={{binary_selected_instruments}}&bpi={{binary_play_all}}'); return false;") 
+                })
+                
+                document.querySelectorAll('.ddlTempo').forEach((ddlTempo2) => {
+                    ddlTempo2.value = ddlTempo.value
+                })
+            })
+        }) 
+
+        //click drop downs
+        document.querySelectorAll('.ddlClick').forEach((ddlClick) => {
+            ddlClick.addEventListener("change", function(event) {
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                let click = ddlClick.value;
+                let ddlTempo = document.querySelector("#ddlTempo") 
+                let tempo = ddlTempo.value;
+                
+                document.querySelectorAll('.lnkPlay').forEach((lnkPlay) => {
+                    let href = lnkPlay.getAttribute("onClick")
+                    let posTempo = href.indexOf("&t=")
+                    href = href.substr(0,posTempo)
+                    lnkPlay.setAttribute('onClick', href +"&t="+ tempo + "&c=" + click + "&bsi={{binary_selected_instruments}}&bpi={{binary_play_all}}'); return false;") 
+                })
+                
+                document.querySelectorAll('.ddlClick').forEach((ddlClick2) => {
+                    ddlClick2.value = ddlClick.value
+                })
+            })
+        }) 
+    })
+
+</script>
 </body>
 </html>

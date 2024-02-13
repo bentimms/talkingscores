@@ -1,5 +1,5 @@
 {% extends "base_site.html" %}
-{% load staticfiles %}
+{% load static %}
 
 {% block title %}Error producing Talking Score - Talking Scores (Beta){% endblock %}
 {% block noindex %}<meta name="robots" content="noindex" />{% endblock %}
@@ -7,50 +7,49 @@
 {% block content %}
     <h1>Talking Scores Beta</h1>
 
-    <div class="col-md-8 col-md-offset-2 text-left">
+    <div class="col-md-11 mx-auto text-start">
 
         <h3>Oops!</h3>
 
-        <div class="alert alert-warning" role="alert">
+        <div class="alert alert-warning tsp" role="alert">
             <span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>
             <span class="sr-only">Warning:</span>
             I'm sorry to say that we had trouble processing this score. The development team has been
-            notified and will look into how to fix this.
+            notified and will look into how to fix this.  Please do Contact Us by email or with the form below, if you would like to be notified when this is fixed.  Or come back occasionally and check the Change Log Page - often an error will be fixed in the next update.   
         </div>
 
-        <p>If you'd like to be notified when this score is working, simply put your email address in the box below. We
+        <p class="tsp">If you'd like to be notified when this score is working, simply put your email address in the box below. We
             promise to only use your email address to notify you about this score.</p>
 
         {#        {{ form }}#}
 
         {% if form.is_bound %}
             {% if form.is_valid %}
-                <div class="alert alert-success">
+                <div class="alert alert-success tsp">
                     <strong>Thank you!</strong>
                     We have made a note of your email address and will let you know when we've investigated why this score
                     isn't working.
                 </div>
             {% else %}
-                <div class="alert alert-danger">
+                <div class="alert alert-danger tsp">
                     {% if form.errors.notify_email.0 == 'This field is required.' %}
                         <strong>Missing email address</strong>
                     {% else %}
                         <strong>Invalid email address</strong>
                     {% endif %}
-                    <br/>Please do enter a valid email address if you'd like to be notified about this score. Honestly,
-                    we don't do anything nefarious with it.
+                    <br/>Please do enter a valid email address if you'd like to be notified about this score. 
                 </div>
             {% endif %}
         {% endif %}
 
         <form action="{% url 'error' id filename %}" method="post">
             {% csrf_token %}
-            <div class="form-group">
+            <div class="form-group tsp">
                 <label for="notify_email">Email address</label>
                 <input type="email" class="form-control" name="notify_email" id="id_notify_email"
                        placeholder="Email address">
             </div>
-            <button type="submit" class="btn btn-default">Notify me</button>
+            <button type="submit" class="btn btn-primary btn-lg">Notify me</button>
         </form>
 
     </div>

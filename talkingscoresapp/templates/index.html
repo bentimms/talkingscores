@@ -1,63 +1,66 @@
 {% extends "base_site.html" %}
-{% load staticfiles %}
+{% load static %}
 
 {% block title %}Talking Scores (Beta) - making musicXML files more accessible{% endblock %}
 {% block meta-description %}Open source project to convert MusicXML files to a spoken description with audio segments - to make sheet music more accessible to print impaired musicians {% endblock %}
 
 {% block content %}
-    <h1>Talking Scores Beta</h1>
+        <h1>Talking Scores Beta</h1>
 
-    <p class="lead">A Talking Score is a spoken representation of stave notation; often with recordings of the music being described.  They are designed to assist print impaired musicians to use sheet music. </p>
+        <div class="col-md-11 mx-auto text-start">
+            <p class="tsp">Talking Scores are a spoken representation of stave notation; often with recordings of the music being described.  They are designed to assist print impaired musicians to use sheet music. </p>
 
-    <p class="lead">Producing a talking score manually can be time consuming, is often not a straightforward process and may require aspects tailored to individual musicians.  This website aims to automatically produce a talking score from a MusicXML file.  </p> 
-        
-    <p class="lead">This is an <a href="https://github.com/bentimms/talkingscores" target="_blank">open source project</a> - currently undertaken by a very small team; working in our spare time.  It is a work in progress and has many known issues - and probably many unknown issues too!  Please see the <a href="/change-log">Change Log</a> for latest updates or <a href="/contact-us">contact us</a> with questions / feature requests etc. </p>
-    <hr>
+            <p class="tsp">Producing a talking score manually can be time consuming, is often not a straightforward process and may require aspects tailored to individual musicians.  This website aims to automatically produce a talking score from a MusicXML file.  It will produce a representation of the score as text along with audio for the music; but you will need to use a screen reader to get the &quot;talking&quot; aspect of the Talking Score.</p> 
+                
+            <p class="tsp">This is an <a href="https://github.com/bentimms/talkingscores" target="_blank">open source project</a> - currently undertaken by a very small team; working in our spare time.  It is a work in progress and therefore may not always work correctly.  Please see the <a href="/change-log">Change Log</a> for latest updates or <a href="/contact-us">contact us</a> with questions / problems / feature requests etc. </p>      
+        </div>
+                
+        <hr>
 
-    <h3><b>Upload or provide a URL to a MusicXML file.</b></h3>
+        <h3><b>Upload or provide a URL to a MusicXML file.</b></h3>
 
-    <form class="form-horizontal" action="{% url 'index' %}" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {% if form.non_field_errors %}
-            {% for error in form.non_field_errors %}
-                <div class="alert alert-danger" role="alert">
-                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                    {{ error }}
+        <form class="form-horizontal text-center mx-auto" action="{% url 'index' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                {% for error in form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            <div class="form-group mx-auto">
+                <label for="id_filename" class="col-sm-3 control-label">Upload</label>
+
+                <div class="col-sm-6 mx-auto">
+                    <input type="file" class="form-control input-lg mx-auto" id="id_filename" name="filename">
                 </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-3 col-sm-6 mx-auto"><p class="tsp">or</p></div>
+            </div>
+            <div class="form-group">
+                <label for="id_url" class="col-sm-3 control-label">URL</label>
+
+                <div class="col-sm-6 mx-auto">
+                    <input type="url" class="form-control input-lg " id="id_url" name="url">
+                </div>
+            </div>
+            <br/>
+            <div class="form-group">
+                <div class="col-sm-offset-3 col-sm-6 mx-auto">
+                    <button type="submit" class="btn btn-primary btn-lg">Generate Talking Score</button>
+                </div>
+            </div>
+        </form>
+
+        <hr>
+        <h3><b>Example scores</b></h3>
+        <p class="tsp">These example scores have been produced by this website and should give a good idea of what a Talking Score is.  They might not have been produced by the latest version of the code.</p>
+        <ul class="list-unstyled">
+            {% for example_score in example_scores %}
+                <li class="tsp"><a href="{% static 'data/' %}{{ example_score }}">{{ example_score }}</a></li> <br/>
             {% endfor %}
-        {% endif %}
-        <div class="form-group">
-            <label for="id_filename" class="col-sm-3 control-label">Upload</label>
-
-            <div class="col-sm-6">
-                <input type="file" class="form-control input-lg" id="id_filename" name="filename">
-            </div>
+        </ul>
         </div>
-        <div class="form-group">
-            <div class="col-sm-offset-3 col-sm-6"><p class="lead">or</p></div>
-        </div>
-        <div class="form-group">
-            <label for="id_url" class="col-sm-3 control-label">URL</label>
-
-            <div class="col-sm-6">
-                <input type="url" class="form-control input-lg" id="id_url" name="url"
-                       placeholder="http://beta.talkingscores.org/scores/macdowell-to-a-wild-rose.xml">
-            </div>
-        </div>
-        <div class="form-group">
-            <div class="col-sm-offset-3 col-sm-6">
-                <button type="submit" class="btn btn-primary btn-lg">Generate Talking Score</button>
-            </div>
-        </div>
-    </form>
-
-    <hr>
-    <h3><b>Example scores</b></h3>
-    <p class="lead">These example scores have been produced by this website and should give a good idea of what a Talking Score is.  They might not have been produced by the latest version of the code.</p>
-    <ul class="list-unstyled">
-        {% for example_score in example_scores %}
-            <li class="lead"><a href="{% static 'data/' %}{{ example_score }}">{{ example_score }}</a></li>
-        {% endfor %}
-    </ul>
-    </div>
 {% endblock content %}

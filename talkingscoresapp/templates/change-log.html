@@ -1,5 +1,5 @@
 {% extends "base_site.html" %}
-{% load staticfiles %}
+{% load static %}
 
 {% block title %}Change Log - Talking Scores (Beta){% endblock %}
 {% block meta-description %}Overview of updates to Talking Scores - an open source project to convert MusicXML files to a spoken representation.{% endblock %}
@@ -7,73 +7,177 @@
 {% block content %}
     <h1>Talking Scores Beta</h1>
 
-    <div class="col-md-8 col-md-offset-2 text-left">
+    <div class="col-md-11 mx-auto text-start">
 
         <h2>Change Log</h2>
 
-        <p class="lead">This page details various updates made to this project.  The dates represent the approximate date when particular changes were committed in Git.  The actual date that the changes became live on this site will most likely be different.  Progress is gradually being made - so please do retry files that may not have worked before.</p>
+        <p class="tsp">This page details various updates made to this project.  The dates represent the approximate date when particular changes were committed in Git.  The actual date that the changes became live on this site will most likely be different.  Progress is gradually being made - so please do retry files that may not have worked before.</p>
 
-        <p class="lead">For more information about specific changes - see the history on <a href="https://github.com/bentimms/talkingscores" target="_blank">Github</a>.</p>
+        <p class="tsp">For more information about specific changes - see the history on <a href="https://github.com/bentimms/talkingscores" target="_blank">Github</a>.</p>
 
-        <p class="lead"><b>Current State</b><br/>
-            This project currently may produce an acceptable output for fairly simple piano music - ie one instrument with 2 staves (treble and bass clef).
-            <ul>
-                <li class="lead">Anything other than a single treble stave and a single bass clef stave causes odd results.  In MuseScore - that is a single instrument with two staves.</li>
+        <p class="tsp"><b>Current State</b><br/>
+            <ul class="tsp">
+                <li>This project currently may produce an acceptable output for fairly simple scores - potentially with multiple instruments.</li>
+                <li>At present - most of the testing is carried out using musicxml files exported from MuseScore.</li>
+                <li>If the musicxml file is too large - then processing will time out (after about 5 minutes)...</li>
             </ul>
         </p>
 
-        <p class="lead"><b>27th June 2021</b><br/>
+        <p class="tsp"><b>28th January 2024</b><br/>
+            <ul class="tsp">
+                <li>Fix a crash trying to read the title of some scores</li>
+                <li>Describe unpitched notes - instead of crashing</li>
+                <li>Fix errors in description and summarisation when the score only had one bar</li>
+                <li>Fix crash when a score doesn't have a time signature</li>
+            </ul>
+        </p>
+
+        <p class="tsp"><b>21st January 2024</b><br/>
+            <ul class="tsp">
+                <li>Fixed a crash caused by not being able to read the tempo number</li>
+            </ul>
+        </p>
+
+        <p class="tsp"><b>29th October 2023</b><br/>
+            <ul class="tsp">
+                <li>Upgraded Python version and most of the libaries used by this project to more current versions.  </li>
+            </ul>
+        </p>
+
+        <p class="tsp"><b>10th October 2023</b><br/>
+            <ul class="tsp">
+                <li>Fix crash before options screen if a score doesn't have a key signature</li>
+                <li>Show the error page instead of unfriendly error if a problem occurs before the Options screen</li>
+            </ul>
+        </p>
+
+        <p class="tsp"><b>22nd July 2023</b><br/>
+            <ul class="tsp">
+                <li>Fix problems with some filenames</li>
+                <li>Imrpoved text on home page</li>
+            </ul>
+        </p>
+
+        <p class="tsp"><b>11th June 2023</b><br/>
+            <ul class="tsp">
+                <li>Tuplets are now described</li>
+                <li>Temporary fix to stop error when scores have non-sequential bar numbers.  Eg pickup bars after a repeat might be numbered differently.  These bars are not described yet - but at least they won't cause an error!</li>
+            </ul>
+        </p>
+
+        <p class="tsp"><b>1st March 2023</b><br/>
+            <ul class="tsp">
+                <li>Summarise time signature / key signature / tempo changes.</li>
+                <li>Describe time signature and key signature changes in the talking score.  Tempo changes are on the todo list!</li>
+                <li>Describe tempo referent (ie beat length).  Also use it for music segments so playback is at the correct speed.</li>
+            </ul>
+        </p>
+
+        <p class="tsp"><b>22nd February 2023</b><br/>
+            <ul class="tsp">
+                <li>Auto summary works on scores with multiple parts.</li>
+                <li>Auto summary now only mentions repetition if is a significant length instead of listing every time each section is repeated.  It does however, now mention the number of unique bars.</li>
+                <li>Repetition is now described within the score.  Eg this bar was first used at bar 2 and most recently used at bar 7.</li>
+                <li>Describe beat fractions.  Eg beat 1 - dotted crochet.  Beat 2.5 - quaver.</li>
+                <li>Significantly increased the speed of producing a talking score - potentially over twice as fast.</li>
+                <li>Improved the document outline (how headings are nested) - for easier screen reader navigation.</li>
+            </ul>
+        </p>
+
+        <p class="tsp"><b>17th October 2022</b><br/>
+            <ul class="tsp">
+                <li>Each instrument is described separately. </li>
+                <li>If the score has multiple instruments - but you don't select all of them for description - you have the option to listen to All instruments together / All selected instruments together / All unselected instruments together.  This should help to demonstrate how particular instruments fit into the rest of the score.</li>
+                <li>While reading the Talking Score - music segments can be played back at 50% / 100% / 150% speed - with or without a click track / metronome.  This means 6 midi files are created for each single part instrument in each segment.  For a long score with lots of parts - this would take too long and the request would time out...  Therefore, midi files are now created on demand - when the first midi file from a particular segment is requested.</li>
+            </ul>
+        </p>
+
+        <p class="tsp"><b>19th April 2022</b><br/>
+            Creates MIDI files for each instrument and each part (or hand) if the instrument has multiple clefs.  Still needs a bit of tidying up etc.<br/>
+        </p>
+
+        <p class="tsp"><b>21st February 2022</b><br/>
+            Added option for phonetic pitch names - Charlie  / Delta / Echo etc.<br/>
+        </p>
+
+        <p class="tsp"><b>19th February 2022</b><br/>
+            Added options for:
+        </p><br/>
+        <ul class="tsp">
+            <li>Pitch description - Colour / Note names  / None</li>
+            <li>Rhythm description - American / British / None</li>
+            <li>Dot - before or after rhythm</li>
+            <li>Rhythm announcement - On change / Every note</li>
+            <li>Octave description - Name / None / Number</li>
+            <li>Octave position - before or after note</li>
+            <li>Octave announcement - Braille rules / Every note / First note of beat / On change</li>
+        </ul>
+        <p class="tsp">There is now also the option to set the text colour or background colour of pitches / octaves / rhythms.<br/> <br/> 
+            The final bar is not omitted from the description! 
+        </p>
+        
+        <p class="tsp"><b>14th February 2022</b><br/>
+            Mention the dot in dotted rhythms. <br/><br/>
+            Describe unnamed instruments as eg &quot;Instrument 2 (unnamed)&quot;. <br/> 
+        </p>
+
+        <p class="tsp"><b>13th February 2022</b><br/>
+            Begun working on scores with multiple parts / instruments.  Choices from the Options page for each score are now passed to the score generator - but they are not particularly acted upon yet.  Added options to play the Selected Instruments and the Unselected Instruments.  If these are selected (and eg if there are any unselected Instruments) then a link is added to the top of outputted score; to play the Selected / Unselected Instruments. <br/><br/>
+            A couple of bug fixes. <br/>
+        </p>
+
+        <p class="tsp"><b>27th June 2021</b><br/>
             Initial release of analysing the score to identify bars (or groups of bars) that have the same pitch and rhythm, or just the same rhythm, or just the same intervals - in order to provide output such as 'Bars 1 to 4 are used almost all of the way through'.<br/> <br/>
             Also attempts to provide a summary of what might be noticeable when glancing at the music; and its distribution throughtout the score - eg 'lots of chords (some Perfect Fifth, almost all minims, mostly 2 notes)' or 'many accidentals (near the end)'. <br/><br/>
             The lists of repeating bars / groups are not very easy to read at present (especially as they are shown the Score Options page as opposed to the actual Talking Score output page) - so in a later update, they will probably be moved into the main description as eg 'first used at bar 5; most recently used at bar 9'. <br/>
         </p>
 
-        <p class="lead"><b>28th December 2020</b><br/>
+        <p class="tsp"><b>28th December 2020</b><br/>
             Upgraded Music21 from 5.5.0 to 6.3.0.  One of the benefits is increased performance when creating MIDI files.</p>
 
-        <p class="lead"><b>1st December 2020</b><br/>
+        <p class="tsp"><b>1st December 2020</b><br/>
             Grace notes are described - but maybe not played correctly.<br/>
             Note ornaments / expressions are described - just using Music21 names so may need to elaborate the description. </p>
         
-        <p class="lead"><b>2nd September 2020</b><br/>
+        <p class="tsp"><b>2nd September 2020</b><br/>
             Rests are now described.<br/>
             Semibreves are no longer described as &quot;Unkown duration&quot;. </p>
         
-        <p class="lead"><b>31st August 2020</b><br/>
+        <p class="tsp"><b>31st August 2020</b><br/>
             If the score has a pickup bar / anacrusis - it is included in the output.</p>
         
-        <p class="lead"><b>30th August 2020</b><br/>
+        <p class="tsp"><b>30th August 2020</b><br/>
             The developers are now notified if an error occurs and the user requests to be notified by email when this is fixed.</p>
         
-        <p class="lead"><b>25th May 2020</b><br/>
+        <p class="tsp"><b>25th May 2020</b><br/>
             If there are no tempo changes at the start of a segment - MIDI files now include the last tempo chnage before the segment.  <br/>
             For example, if there is a tempo mark of 80 bpm in bar 5 and no other tempo changes in the score.  If you play bars 8 to 11, the MIDI file will include the tempo change from bar 5 at the start; so that bars 8 to 11 will play at the correct speed.</p>
 
-        <p class="lead"><b>26th April 2020</b><br/>
+        <p class="tsp"><b>26th April 2020</b><br/>
             Added Change Log, Contact Us and Privacy Policy pages with basic title and description for SEO purposes.</p>
 
-        <p class="lead"><b>22nd April 2020</b><br/>
+        <p class="tsp"><b>22nd April 2020</b><br/>
             Fixed error when long name for Dynamics is not known.</p>
 
-        <p class="lead"><b>19th April 2020</b><br/>
+        <p class="tsp"><b>19th April 2020</b><br/>
             Tempos are inserted in midi files for the 2nd stave.  <b>To-do:</b> - insert current tempo at the start of segments.</p>
     
-        <p class="lead"><b>13th April 2020</b><br/>
+        <p class="tsp"><b>13th April 2020</b><br/>
             Added Google Analytics.  Configured robots.txt and noindex so that completed scores are not indexed or tracked.</p>
     
-        <p class="lead"><b>5th April 2020</b><br/>
+        <p class="tsp"><b>5th April 2020</b><br/>
             Fixed CORS error so that midi files are played - ie we can listen to the score - or sections of it.</p>
 
-        <p class="lead"><b>19th January 2020</b><br/>
+        <p class="tsp"><b>19th January 2020</b><br/>
             Use 'bars at a time' from Options screen.</p>
     
-        <p class="lead"><b>28th July 2019</b><br/>
+        <p class="tsp"><b>28th July 2019</b><br/>
             Fixed 'unknown duration' for notes smaller than quavers.</p>
 
-        <p class="lead"><b>27th July 2019</b><br/>
+        <p class="tsp"><b>27th July 2019</b><br/>
             Fixed key signature in preamble.</p>
 
-        <p class="lead"><b>21st July 2019</b><br/>
+        <p class="tsp"><b>21st July 2019</b><br/>
             Fixed pitch ordering within beats and chords.</p>
     
     </div>

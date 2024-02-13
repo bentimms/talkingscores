@@ -1,4 +1,6 @@
-Django>=2.2.10
-Jinja2==2.10.1
-music21==6.3.0
-requests==2.22.0
+Django>=4.2.6
+Jinja2==3.0.0
+music21==9.1.0
+requests==2.31.0
+pathvalidate==3.2.0
+
